@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ---------------------------------------------------------------
+     SAVORA brand palette
+  ---------------------------------------------------------------- */
+  --savora-gold: #d97706;
+  --savora-gold-light: #f59e0b;
+  --savora-gold-dark: #b45309;
+  --savora-cream: #fef3c7;
+  --savora-dark: #0a0a0a;
+  --savora-charcoal: #1a1a2e;
+
+  /* ---------------------------------------------------------------
+     Semantic tokens (HSL triplets, consumed by tailwind.config.js)
+  ---------------------------------------------------------------- */
+  --background: 0 0% 4%;
+  --foreground: 40 20% 96%;
+
+  --card: 0 0% 6%;
+  --card-foreground: 40 20% 96%;
+
+  --popover: 0 0% 5%;
+  --popover-foreground: 40 20% 96%;
+
+  --primary: 32 95% 44%;
+  --primary-foreground: 0 0% 4%;
+
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 40 20% 96%;
+
+  --muted: 0 0% 11%;
+  --muted-foreground: 40 8% 66%;
+
+  --accent: 30 30% 14%;
+  --accent-foreground: 38 92% 70%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 40 8% 20%;
+  --input: 40 8% 20%;
+  --ring: 32 95% 50%;
+
+  /* Price tiers — warm gold through to deep ember */
+  --chart-1: 32 95% 44%;
+  --chart-2: 43 96% 56%;
+  --chart-3: 22 90% 52%;
+  --chart-4: 12 76% 46%;
+  --chart-5: 351 74% 42%;
+
+  /* Plain colour values used by the conveyor's color-mix() shading */
+  --color-background: #0a0a0a;
+  --color-foreground: #f5f1e8;
+  --color-muted-foreground: #a8a29a;
+  --color-card: #0f0f0f;
+  --color-border: #2f2b26;
+
+  /* ---------------------------------------------------------------
+     Type
+  ---------------------------------------------------------------- */
+  --sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: "Playfair Display", Georgia, serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  color-scheme: dark;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: #e9e4d9;
+  background: #0a0a0a;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    font-size: 15px;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: #0a0a0a;
+    color: #e9e4d9;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    text-align: left;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: inherit;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  p {
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  ::selection {
+    background: var(--savora-gold);
+    color: #0a0a0a;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--savora-gold);
+    outline-offset: 3px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #332e27;
+    border-radius: 999px;
+    border: 2px solid #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--savora-gold-dark);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Shared section rhythm so every band lines up */
+  .section-shell {
+    @apply relative w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-amber-300/90;
+  }
+
+  .gold-rule {
+    @apply h-px w-12 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent;
+  }
+
+  .btn-gold {
+    @apply relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 px-7 py-3.5 text-sm font-medium tracking-wide text-[#0a0a0a] shadow-[0_18px_40px_-18px_rgba(217,119,6,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_50px_-18px_rgba(245,158,11,0.75)] active:translate-y-0 active:scale-[0.99];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2.5 rounded-full border border-amber-500/30 bg-white/[0.03] px-7 py-3.5 text-sm font-medium tracking-wide text-amber-100/90 backdrop-blur-sm transition-all duration-300 hover:border-amber-400/60 hover:bg-white/[0.07] hover:text-white;
+  }
+
+  .card-surface {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.02] backdrop-blur-sm transition-all duration-300;
+  }
+}
