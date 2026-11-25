@@ -1,26 +1,32 @@
 import { motion } from "motion/react";
 import { Flame, ShieldCheck, Timer, Wine } from "lucide-react";
+import { Reveal, RevealGroup, RevealItem } from "./ui/Reveal";
+import { SplitText } from "./ui/SplitText";
 
 const pillars = [
   {
+    number: "01",
     icon: Timer,
-    title: "28-Day Dry-Aged",
+    title: "28-day dry-aged",
     copy: "USDA Prime beef rested in our Himalayan salt room until the flavour turns deep and nutty.",
   },
   {
+    number: "02",
     icon: Flame,
-    title: "Live Oak Fire",
-    copy: "Everything hits the open grill — white oak and hickory, never a gas flame.",
+    title: "Live oak fire",
+    copy: "Everything meets the open grill — white oak and hickory, never a gas flame.",
   },
   {
+    number: "03",
     icon: ShieldCheck,
-    title: "Hand-Cut Daily",
-    copy: "Butchered in-house each morning by our chef, so every plate is traced to the animal.",
+    title: "Cut in-house daily",
+    copy: "Butchered each morning by our chef, so every plate can be traced to the animal.",
   },
   {
+    number: "04",
     icon: Wine,
     title: "Cellar of 240",
-    copy: "Napa classics, old-world Burgundy and a bourbon wall curated by our head sommelier.",
+    copy: "Napa classics, old-world Burgundy and a bourbon wall chosen by our sommelier.",
   },
 ];
 
@@ -31,135 +37,103 @@ const stats = [
   { value: "240", label: "Cellar labels" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
-
 export function Features() {
   return (
     <section
       id="story"
       aria-labelledby="story-heading"
-      className="relative scroll-mt-24 overflow-hidden border-t border-white/[0.06] bg-[#080808] py-20 lg:py-28"
+      className="relative scroll-mt-24 overflow-hidden border-t border-line/60 bg-ink py-20 lg:py-28"
     >
-      {/* atmosphere */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -left-40 top-10 size-[32rem] rounded-full bg-amber-700/10 blur-[140px]" />
-        <div className="absolute -right-32 bottom-0 size-[26rem] rounded-full bg-amber-500/[0.06] blur-[120px]" />
+        <div className="absolute -left-48 top-1/4 size-[36rem] rounded-full bg-[radial-gradient(circle,rgba(198,164,106,0.08),transparent_66%)]" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/25 to-transparent" />
       </div>
 
-      <div className="relative mx-auto grid w-full max-w-7xl gap-14 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:px-8">
-        {/* Image column */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={fadeUp}
-          className="relative"
-        >
-          <div className="relative overflow-hidden rounded-3xl border border-amber-900/30">
-            <img
-              src="/images/chef-pass.jpg"
-              alt="Chef plating a seared dry-aged ribeye at the SAVORA kitchen pass"
+      <div className="section-shell relative grid gap-14 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-20">
+        {/* Image */}
+        <Reveal className="relative">
+          <div className="relative overflow-hidden rounded-2xl border border-line">
+            <motion.img
+              src="/images/room-interior.jpg"
+              alt="The SAVORA dining room before service, set with linen and glassware"
               loading="lazy"
-              className="aspect-[4/5] w-full object-cover transition-transform duration-[1200ms] hover:scale-[1.03]"
+              decoding="async"
+              initial={{ scale: 1.12 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+              className="aspect-[4/5] w-full object-cover brightness-[0.68] contrast-[1.08] saturate-[0.85]"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6">
-              <p className="text-[10px] uppercase tracking-[0.34em] text-amber-300/80">
-                The kitchen, 5:40 PM
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/10 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 sm:p-8">
+              <p className="text-[9px] uppercase tracking-[0.34em] text-gold-light/80">
+                The room · 4:45 PM
               </p>
-              <p className="mt-2 font-serif text-2xl font-light text-white">
-                Every plate starts with live fire.
+              <p className="mt-2 max-w-xs font-serif text-2xl font-light leading-snug text-cream">
+                Set by hand, every afternoon.
               </p>
             </div>
           </div>
 
-          {/* floating gold frame accent */}
-          <div
-            className="pointer-events-none absolute -bottom-5 -right-5 hidden size-32 rounded-2xl border border-amber-500/25 lg:block"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute -left-3 -top-3 hidden h-24 w-24 border-l border-t border-amber-500/40 lg:block"
-            aria-hidden="true"
-          />
-        </motion.div>
+          <div className="pointer-events-none absolute -bottom-4 -right-4 hidden size-32 rounded-xl border border-gold/25 lg:block" aria-hidden="true" />
+          <div className="pointer-events-none absolute -left-4 -top-4 hidden h-24 w-24 border-l border-t border-gold/40 lg:block" aria-hidden="true" />
+        </Reveal>
 
-        {/* Copy column */}
+        {/* Copy */}
         <div>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={fadeUp}
-          >
+          <Reveal>
             <p className="eyebrow">
               <span className="gold-rule" aria-hidden="true" />
-              Our Philosophy
+              Our Story
             </p>
-            <h2
-              id="story-heading"
-              className="mt-5 font-serif text-4xl font-light leading-[1.08] text-white sm:text-5xl lg:text-[3.4rem]"
-            >
-              Fire, patience and
-              <br />
-              <span className="text-amber-300">the American table</span>
-            </h2>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400 sm:text-lg">
-              SAVORA was built around one idea: take the comfort food America grew up on and give it
+            <SplitText
+              as="h2"
+              text="Fire, patience and the American table"
+              delay={0.1}
+              className="mt-5 max-w-xl font-serif text-[2.15rem] font-light leading-[1.06] text-cream sm:text-5xl lg:text-[3.3rem]"
+              wordClassName="[&:nth-child(3)]:italic"
+            />
+            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-sand sm:text-base">
+              SAVORA began with a simple idea: take the comfort food America grew up on and give it
               the rigour of a fine-dining kitchen. Nothing rushed, nothing frozen, nothing wasted.
             </p>
-          </motion.div>
+          </Reveal>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            {pillars.map((pillar, i) => {
+          <RevealGroup className="mt-10 grid gap-px overflow-hidden rounded-xl border border-line/70 bg-line/40 sm:grid-cols-2">
+            {pillars.map((pillar) => {
               const Icon = pillar.icon;
               return (
-                <motion.div
-                  key={pillar.title}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-60px" }}
-                  variants={fadeUp}
-                  className="card-surface group rounded-2xl p-5 hover:-translate-y-1 hover:border-amber-500/30 hover:bg-white/[0.04]"
+                <RevealItem
+                  key={pillar.number}
+                  className="group relative bg-ink p-5 transition-colors duration-500 hover:bg-coal"
                 >
-                  <span className="inline-flex size-10 items-center justify-center rounded-full border border-amber-500/25 bg-amber-500/10 text-amber-300 transition-colors duration-300 group-hover:border-amber-400/50 group-hover:text-amber-200">
-                    <Icon className="size-[18px]" aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 text-sm font-medium uppercase tracking-[0.14em] text-neutral-100">
-                    {pillar.title}
-                  </h3>
-                  <p className="mt-2 text-[13px] leading-relaxed text-neutral-400">{pillar.copy}</p>
-                </motion.div>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex size-9 items-center justify-center rounded-full border border-line text-gold/85 transition-colors duration-300 group-hover:border-gold/60 group-hover:text-gold-light">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <span className="font-mono text-[10px] tracking-widest text-sand/35">
+                      {pillar.number}
+                    </span>
+                  </div>
+                  <h3 className="mt-4 font-serif text-lg text-cream">{pillar.title}</h3>
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-sand/75">{pillar.copy}</p>
+                </RevealItem>
               );
             })}
-          </div>
+          </RevealGroup>
 
-          <motion.dl
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-60px" }}
-            variants={fadeUp}
-            className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.06] sm:grid-cols-4"
-          >
+          <Reveal delay={0.1} as="dl" className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-[#0a0a0a] px-4 py-5 text-center">
-                <dt className="order-2 mt-1 text-[10px] uppercase tracking-[0.24em] text-neutral-500">
-                  {stat.label}
-                </dt>
-                <dd className="order-1 font-serif text-2xl font-light text-amber-200 sm:text-3xl">
+              <div key={stat.label}>
+                <dd className="font-serif text-3xl font-light text-gold-light sm:text-4xl">
                   {stat.value}
                 </dd>
+                <dt className="mt-1 text-[9px] uppercase tracking-[0.24em] text-sand/55">
+                  {stat.label}
+                </dt>
               </div>
             ))}
-          </motion.dl>
+          </Reveal>
         </div>
       </div>
     </section>

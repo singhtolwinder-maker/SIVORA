@@ -1,4 +1,6 @@
-import { ArrowUpRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
+import { Reveal } from "./ui/Reveal";
+import { Magnetic } from "./ui/Magnetic";
 
 const hours = [
   { day: "Tuesday – Thursday", time: "5:00 PM – 10:30 PM" },
@@ -10,97 +12,135 @@ const hours = [
 const navigation = [
   { label: "Menu", href: "#menu" },
   { label: "Our Story", href: "#story" },
+  { label: "Chef's Table", href: "#chef" },
+  { label: "Gallery", href: "#gallery" },
   { label: "Experiences", href: "#experiences" },
-  { label: "Reviews", href: "#reviews" },
+];
+
+const socials = [
+  { label: "Instagram", href: "https://instagram.com", icon: Instagram },
+  { label: "Facebook", href: "https://facebook.com", icon: Facebook },
+  { label: "X", href: "https://x.com", icon: Twitter },
 ];
 
 export function Footer() {
   return (
-    <footer id="contact" className="relative scroll-mt-24 overflow-hidden bg-[#060606]">
+    <footer id="contact" className="relative scroll-mt-24 overflow-hidden bg-ink">
       {/* Reservation band */}
-      <div className="relative border-y border-white/[0.07] bg-[url('/images/room-interior.jpg')] bg-cover bg-center">
-        <div className="absolute inset-0 bg-[#080808]/75" aria-hidden="true" />
-        <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-6 px-4 py-16 text-center sm:px-6 lg:flex-row lg:justify-between lg:px-8 lg:text-left">
+      <div className="relative isolate border-t border-line/60">
+        <div className="absolute inset-0 -z-10">
+          <img
+            src="/images/interior-night.jpg"
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-ink/85" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-ink/40" />
+        </div>
+
+        <div className="section-shell flex flex-col items-start gap-8 py-16 text-left lg:flex-row lg:items-center lg:justify-between lg:py-20">
           <div>
-            <p className="eyebrow justify-center lg:justify-start">
+            <p className="eyebrow">
               <span className="gold-rule" aria-hidden="true" />
               Your table is waiting
             </p>
-            <h2 className="mt-4 font-serif text-3xl font-light leading-tight text-white sm:text-4xl">
-              Join us for dinner tonight.
+            <h2 className="mt-4 max-w-lg font-serif text-3xl font-light leading-tight text-cream sm:text-[2.7rem]">
+              Join us for dinner
+              <br />
+              <span className="italic text-gold-light">tonight.</span>
             </h2>
           </div>
-          <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <a href="tel:+12125550184" className="btn-ghost">
-              <Phone className="size-4" aria-hidden="true" />
-              (212) 555-0184
-            </a>
-            <a href="mailto:reservations@savora.com" className="btn-gold">
-              Reserve by Email
-              <ArrowUpRight className="size-4" aria-hidden="true" />
-            </a>
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <Magnetic>
+              <a href="tel:+12125550184" className="btn-ghost w-full sm:w-auto">
+                <Phone className="size-4" aria-hidden="true" />
+                (212) 555-0184
+              </a>
+            </Magnetic>
+            <Magnetic>
+              <a href="#reserve" className="btn-gold w-full sm:w-auto">
+                Reserve a Table
+              </a>
+            </Magnetic>
           </div>
         </div>
       </div>
 
-      {/* Main footer */}
-      <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+      {/* Main */}
+      <div className="section-shell pb-10 pt-14 lg:pt-16">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-full border border-amber-500/40 bg-gradient-to-br from-amber-500/25 to-transparent">
-                <span className="font-serif text-lg leading-none text-amber-200">S</span>
+            <div className="flex items-center gap-3.5">
+              <span className="relative flex size-10 items-center justify-center rounded-full border border-gold/40">
+                <span className="absolute inset-[3px] rounded-full bg-gradient-to-br from-gold/25 via-transparent to-transparent" />
+                <span className="relative font-serif text-[17px] leading-none text-gold-light">S</span>
               </span>
               <div className="flex flex-col leading-none">
-                <span className="font-serif text-xl tracking-[0.26em] text-amber-50">SAVORA</span>
-                <span className="mt-1.5 text-[9px] uppercase tracking-[0.42em] text-neutral-500">
+                <span className="font-serif text-[1.22rem] tracking-[0.34em] text-cream">SAVORA</span>
+                <span className="mt-1.5 text-[8px] uppercase tracking-[0.44em] text-sand/60">
                   American Restaurant
                 </span>
               </div>
             </div>
-            <p className="mt-6 max-w-xs text-sm leading-relaxed text-neutral-400">
+
+            <p className="mt-6 max-w-xs text-[13px] leading-relaxed text-sand/75">
               A wood-fired American kitchen in the West Village — dry-aged beef, Gulf seafood and a
               cellar built for long dinners.
             </p>
+
             <div className="mt-6 flex flex-wrap gap-2">
               {["Wood-fired", "Dry-aged", "Full bar"].map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-neutral-400"
+                  className="rounded-full border border-line/80 px-3 py-1 text-[9px] uppercase tracking-[0.2em] text-sand/65"
                 >
                   {tag}
                 </span>
               ))}
             </div>
+
+            <div className="mt-7 flex items-center gap-2.5">
+              {socials.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    aria-label={`SAVORA on ${social.label}`}
+                    className="inline-flex size-9 items-center justify-center rounded-full border border-line text-cream/65 transition-colors duration-300 hover:border-gold/60 hover:text-gold-light"
+                  >
+                    <Icon className="size-4" aria-hidden="true" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
           {/* Visit */}
           <div>
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.28em] text-neutral-500">
-              Visit
-            </h3>
-            <ul className="mt-5 space-y-4 text-sm text-neutral-300">
+            <h3 className="text-[9px] font-medium uppercase tracking-[0.3em] text-sand/55">Visit</h3>
+            <ul className="mt-5 space-y-4 text-[13px] text-cream/80">
               <li className="flex gap-3">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-amber-500/80" aria-hidden="true" />
-                <span>
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-gold/70" aria-hidden="true" />
+                <span className="leading-relaxed">
                   1428 Hudson Street
                   <br />
                   New York, NY 10013
                 </span>
               </li>
               <li className="flex gap-3">
-                <Phone className="mt-0.5 size-4 shrink-0 text-amber-500/80" aria-hidden="true" />
-                <a href="tel:+12125550184" className="transition-colors hover:text-amber-200">
+                <Phone className="mt-0.5 size-3.5 shrink-0 text-gold/70" aria-hidden="true" />
+                <a href="tel:+12125550184" className="transition-colors hover:text-gold-light">
                   (212) 555-0184
                 </a>
               </li>
               <li className="flex gap-3">
-                <Mail className="mt-0.5 size-4 shrink-0 text-amber-500/80" aria-hidden="true" />
-                <a
-                  href="mailto:hello@savora.com"
-                  className="transition-colors hover:text-amber-200"
-                >
+                <Mail className="mt-0.5 size-3.5 shrink-0 text-gold/70" aria-hidden="true" />
+                <a href="mailto:hello@savora.com" className="transition-colors hover:text-gold-light">
                   hello@savora.com
                 </a>
               </li>
@@ -109,18 +149,12 @@ export function Footer() {
 
           {/* Hours */}
           <div>
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.28em] text-neutral-500">
-              Hours
-            </h3>
-            <ul className="mt-5 space-y-3 text-sm">
+            <h3 className="text-[9px] font-medium uppercase tracking-[0.3em] text-sand/55">Hours</h3>
+            <ul className="mt-5 space-y-3.5 text-[13px]">
               {hours.map((row) => (
                 <li key={row.day} className="flex flex-col gap-0.5">
-                  <span className="text-neutral-300">{row.day}</span>
-                  <span
-                    className={`text-xs ${
-                      row.time === "Closed" ? "text-amber-600/80" : "text-neutral-500"
-                    }`}
-                  >
+                  <span className="text-cream/80">{row.day}</span>
+                  <span className={`text-[11px] ${row.time === "Closed" ? "text-gold/70" : "text-sand/55"}`}>
                     {row.time}
                   </span>
                 </li>
@@ -130,41 +164,37 @@ export function Footer() {
 
           {/* Explore */}
           <div>
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.28em] text-neutral-500">
-              Explore
-            </h3>
-            <ul className="mt-5 space-y-3 text-sm">
+            <h3 className="text-[9px] font-medium uppercase tracking-[0.3em] text-sand/55">Explore</h3>
+            <ul className="mt-5 space-y-3 text-[13px]">
               {navigation.map((item) => (
                 <li key={item.label}>
                   <a
                     href={item.href}
-                    className="group inline-flex items-center gap-1.5 text-neutral-300 transition-colors hover:text-amber-200"
+                    className="group inline-flex items-center gap-2 text-cream/75 transition-colors hover:text-gold-light"
                   >
                     {item.label}
-                    <ArrowUpRight
-                      className="size-3.5 -translate-x-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                    <span
                       aria-hidden="true"
+                      className="h-px w-0 bg-gold/60 transition-all duration-300 group-hover:w-4"
                     />
                   </a>
                 </li>
               ))}
             </ul>
-            <div className="mt-6 flex items-center gap-2 text-xs text-neutral-500">
-              <Clock className="size-3.5" aria-hidden="true" />
-              Kitchen closes 30 min before the room
-            </div>
+            <a href="#reserve" className="mt-6 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.24em] text-gold/80 transition-colors hover:text-gold-light">
+              Reservations
+              <span aria-hidden="true">→</span>
+            </a>
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/[0.07] pt-7 text-xs text-neutral-600 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-line/60 pt-6 text-[10px] text-sand/45 sm:flex-row">
           <p>© {new Date().getFullYear()} SAVORA. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <a href="#home" className="transition-colors hover:text-neutral-400">
+            <a href="#home" className="transition-colors hover:text-cream">
               Back to top
             </a>
-            <span className="text-neutral-800" aria-hidden="true">
-              |
-            </span>
+            <span className="text-line" aria-hidden="true">·</span>
             <span>West Village, New York</span>
           </div>
         </div>

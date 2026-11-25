@@ -1,276 +1,539 @@
-"use client";
-
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { ArrowRight, ArrowUpRight, Check, Plus, X } from "lucide-react";
 import { SushiConveyorMenu } from "@/components/ui/sushi-conveyor-menu";
-import { motion } from "motion/react";
+import { Reveal } from "@/components/ui/Reveal";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+
+const EASE = [0.16, 1, 0.3, 1];
+
+const categories = ["All", "Prime Cuts", "Signatures", "Starters", "Desserts"];
 
 const dishes = [
   {
-    id: "gourmet-burger",
-    name: "Gourmet Wagyu Burger",
-    description: "American Wagyu beef, aged cheddar, caramelized onions, truffle aioli, brioche bun",
-    price: "$28",
-    tier: 3,
-    image: "/images/dish-burger.jpg",
-    details: ["8 oz Wagyu", "Truffle fries", "Contains gluten, dairy"],
+    id: "tomahawk",
+    name: "Dry-Aged Tomahawk",
+    category: "Prime Cuts",
+    price: "$145",
+    description:
+      "Thirty-two ounces of 28-day dry-aged ribeye, grilled over white oak and carved at the table for two.",
+    details: ["32 oz · serves two", "45 minutes over oak", "Carved tableside", "Bone-in"],
+    image: "/images/chef-special.jpg",
+    tier: 5,
+    tag: "Chef's cut",
   },
   {
     id: "ribeye-steak",
     name: "Dry-Aged Ribeye",
-    description: "28-day dry-aged USDA Prime ribeye, herb compound butter, roasted garlic, thyme jus",
+    category: "Prime Cuts",
     price: "$58",
-    tier: 5,
-    image: "/images/dish-ribeye.jpg",
+    description:
+      "28-day dry-aged USDA Prime ribeye, herb compound butter, roasted garlic and thyme jus.",
     details: ["16 oz", "Grass-fed", "Gluten-free option"],
-  },
-  {
-    id: "bbq-ribs",
-    name: "Smoked BBQ Pork Ribs",
-    description: "Slow-smoked 12 hours, house BBQ sauce, coleslaw, cornbread, pickles",
-    price: "$36",
-    tier: 4,
-    image: "/images/dish-ribs.jpg",
-    details: ["Full rack", "Hickory smoked", "Contains gluten"],
-  },
-  {
-    id: "crispy-chicken",
-    name: "Buttermilk Fried Chicken",
-    description: "Double-dipped in buttermilk, hot honey glaze, pickled slaw, house-made biscuits",
-    price: "$32",
-    tier: 4,
-    image: "/images/dish-fried-chicken.jpg",
-    details: ["Half bird", "24hr brine", "Contains gluten, dairy"],
-  },
-  {
-    id: "loaded-fries",
-    name: "Loaded Truffle Fries",
-    description: "Hand-cut fries, black truffle oil, parmesan, garlic aioli, scallions, bacon crumbles",
-    price: "$16",
-    tier: 2,
-    image: "/images/dish-fries.jpg",
-    details: ["Shareable", "Vegetarian option", "Contains dairy"],
-  },
-  {
-    id: "mac-cheese",
-    name: "Lobster Mac & Cheese",
-    description: "Cavatappi, aged cheddar, gruyère, Maine lobster, panko crust, chives",
-    price: "$34",
-    tier: 4,
-    image: "/images/dish-mac-cheese.jpg",
-    details: ["Maine lobster", "Three-cheese blend", "Contains gluten, dairy, shellfish"],
-  },
-  {
-    id: "smash-burger",
-    name: "Double Smash Burger",
-    description: "Two smashed patties, American cheese, special sauce, lettuce, tomato, potato bun",
-    price: "$22",
-    tier: 3,
-    image: "/images/dish-smash-burger.jpg",
-    details: ["Two 4oz patties", "Classic style", "Contains gluten, dairy"],
+    image: "/images/dish-ribeye.jpg",
+    tier: 5,
   },
   {
     id: "filet-mignon",
     name: "Filet Mignon",
-    description: "Center-cut filet, bordelaise sauce, pomme purée, roasted asparagus, crispy shallots",
+    category: "Prime Cuts",
     price: "$62",
-    tier: 5,
-    image: "/images/dish-filet.jpg",
+    description:
+      "Center-cut filet, bordelaise sauce, pomme purée, roasted asparagus and crispy shallots.",
     details: ["8 oz", "USDA Prime", "Gluten-free option"],
+    image: "/images/dish-filet.jpg",
+    tier: 5,
   },
   {
-    id: "chicken-sandwich",
-    name: "Nashville Hot Chicken Sandwich",
-    description: "Crispy chicken, cayenne glaze, dill pickles, slaw, brioche bun, comeback sauce",
-    price: "$24",
+    id: "gourmet-burger",
+    name: "Wagyu Burger",
+    category: "Signatures",
+    price: "$28",
+    description:
+      "American Wagyu beef, aged cheddar, caramelised onions, truffle aioli on a brioche bun.",
+    details: ["8 oz Wagyu", "Truffle fries", "Contains gluten, dairy"],
+    image: "/images/dish-burger.jpg",
     tier: 3,
-    image: "/images/dish-chicken-sandwich.jpg",
-    details: ["Spicy level 3/5", "Buttermilk brine", "Contains gluten, dairy"],
   },
   {
-    id: "onion-rings",
-    name: "Beer-Battered Onion Rings",
-    description: "Sweet onions, craft beer batter, chipotle ranch, smoked paprika salt",
-    price: "$14",
-    tier: 1,
-    image: "/images/dish-onion-rings.jpg",
-    details: ["Hand-battered", "Vegetarian", "Contains gluten, dairy"],
+    id: "mac-cheese",
+    name: "Lobster Mac & Cheese",
+    category: "Signatures",
+    price: "$34",
+    description:
+      "Cavatappi, aged cheddar, gruyère, Maine lobster, panko crust and chives.",
+    details: ["Maine lobster", "Three-cheese blend", "Contains shellfish"],
+    image: "/images/dish-mac-cheese.jpg",
+    tier: 4,
+  },
+  {
+    id: "bbq-ribs",
+    name: "Smoked Pork Ribs",
+    category: "Signatures",
+    price: "$36",
+    description:
+      "Slow-smoked for twelve hours, house BBQ glaze, coleslaw, cornbread and pickles.",
+    details: ["Full rack", "Hickory smoked", "Contains gluten"],
+    image: "/images/dish-ribs.jpg",
+    tier: 4,
+  },
+  {
+    id: "crispy-chicken",
+    name: "Buttermilk Fried Chicken",
+    category: "Signatures",
+    price: "$32",
+    description:
+      "Double-dipped in buttermilk, hot honey glaze, pickled slaw and house-made biscuits.",
+    details: ["Half bird", "24-hour brine", "Contains gluten, dairy"],
+    image: "/images/dish-fried-chicken.jpg",
+    tier: 4,
+  },
+  {
+    id: "smash-burger",
+    name: "Double Smash Burger",
+    category: "Signatures",
+    price: "$22",
+    description:
+      "Two smashed patties, American cheese, special sauce, lettuce, tomato and a potato bun.",
+    details: ["Two 4 oz patties", "Classic style", "Contains gluten, dairy"],
+    image: "/images/dish-smash-burger.jpg",
+    tier: 3,
   },
   {
     id: "pulled-pork",
     name: "Pulled Pork Sandwich",
-    description: "Slow-braised pork shoulder, Carolina gold sauce, slaw, brioche, fried onions",
+    category: "Signatures",
     price: "$26",
-    tier: 3,
+    description:
+      "Slow-braised shoulder, Carolina gold sauce, slaw, brioche and fried onions.",
+    details: ["12-hour braise", "House pickles", "Contains gluten, dairy"],
     image: "/images/dish-pulled-pork.jpg",
-    details: ["12hr braised", "House pickles", "Contains gluten, dairy"],
+    tier: 3,
+  },
+  {
+    id: "chicken-sandwich",
+    name: "Nashville Hot Chicken",
+    category: "Signatures",
+    price: "$24",
+    description:
+      "Crispy chicken, cayenne glaze, dill pickles, slaw, brioche and comeback sauce.",
+    details: ["Heat level 3/5", "Buttermilk brine", "Contains gluten, dairy"],
+    image: "/images/dish-chicken-sandwich.jpg",
+    tier: 3,
+  },
+  {
+    id: "loaded-fries",
+    name: "Truffle Fries",
+    category: "Starters",
+    price: "$16",
+    description:
+      "Hand-cut fries, black truffle oil, parmesan, garlic aioli, scallions and bacon crumble.",
+    details: ["Shareable", "Vegetarian option", "Contains dairy"],
+    image: "/images/dish-fries.jpg",
+    tier: 2,
+  },
+  {
+    id: "onion-rings",
+    name: "Beer-Battered Onion Rings",
+    category: "Starters",
+    price: "$14",
+    description:
+      "Sweet onions, craft beer batter, chipotle ranch and smoked paprika salt.",
+    details: ["Hand-battered", "Vegetarian", "Contains gluten, dairy"],
+    image: "/images/dish-onion-rings.jpg",
+    tier: 1,
   },
   {
     id: "cheesecake",
     name: "New York Cheesecake",
-    description: "Classic dense cheesecake, graham crust, strawberry compote, whipped cream",
+    category: "Desserts",
     price: "$12",
-    tier: 1,
-    image: "/images/dish-cheesecake.jpg",
+    description:
+      "Classic dense cheesecake, graham crust, blueberry compote and whipped cream.",
     details: ["Made daily", "Vegetarian", "Contains gluten, dairy, eggs"],
+    image: "/images/dish-cheesecake.jpg",
+    tier: 1,
   },
 ];
 
-const tierData = [
-  { tier: 1, label: "Starters & Sides", range: "$12–14", color: "bg-chart-1" },
-  { tier: 2, label: "Shareables", range: "$16", color: "bg-chart-2" },
-  { tier: 3, label: "Sandwiches & Burgers", range: "$22–28", color: "bg-chart-3" },
-  { tier: 4, label: "Mains", range: "$32–36", color: "bg-chart-4" },
-  { tier: 5, label: "Premium Cuts", range: "$58–62", color: "bg-chart-5" },
-];
+const featured = dishes[0];
+
+function useLockBody(locked) {
+  useEffect(() => {
+    if (!locked) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [locked]);
+}
+
+function DishDialog({ dish, onClose }) {
+  const closeRef = useRef(null);
+  useLockBody(Boolean(dish));
+
+  useEffect(() => {
+    if (!dish) return;
+    closeRef.current?.focus();
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dish, onClose]);
+
+  return (
+    <AnimatePresence>
+      {dish && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dish-dialog-title"
+        >
+          <div className="absolute inset-0 bg-ink/85 backdrop-blur-md" onClick={onClose} />
+          <motion.div
+            initial={{ y: 40, opacity: 0, scale: 0.98 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 24, opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="relative max-h-[92svh] w-full max-w-3xl overflow-y-auto border border-line bg-coal shadow-[0_60px_140px_-50px_rgba(0,0,0,1)] sm:rounded-2xl"
+          >
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Close dish details"
+              className="absolute right-4 top-4 z-10 inline-flex size-10 items-center justify-center rounded-full border border-line bg-ink/70 text-cream/80 backdrop-blur-md transition-colors hover:border-gold/60 hover:text-gold-light"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+
+            <div className="grid sm:grid-cols-2">
+              <div className="relative h-56 overflow-hidden sm:h-full">
+                <img
+                  src={dish.image}
+                  alt={dish.name}
+                  className="size-full object-cover"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-coal/70 via-transparent to-transparent sm:bg-gradient-to-r" />
+              </div>
+
+              <div className="p-6 sm:p-8">
+                <p className="text-[9px] uppercase tracking-[0.32em] text-gold/80">{dish.category}</p>
+                <h3 id="dish-dialog-title" className="mt-3 font-serif text-3xl font-light text-cream">
+                  {dish.name}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-sand">{dish.description}</p>
+
+                <p className="mt-6 font-serif text-3xl text-gold-light">{dish.price}</p>
+
+                <ul className="mt-6 space-y-2.5">
+                  {dish.details.map((detail) => (
+                    <li key={detail} className="flex items-start gap-2.5 text-[13px] text-cream/75">
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-gold" aria-hidden="true" />
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8 flex flex-col gap-2.5">
+                  <a href="#reserve" onClick={onClose} className="btn-gold w-full">
+                    Reserve a Table
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </a>
+                  <p className="text-center text-[11px] text-sand/60">
+                    Allergies? Tell us when you book — we adapt every plate.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function DishCard({ dish, index, onOpen }) {
+  return (
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.6, delay: Math.min(index * 0.05, 0.3), ease: EASE }}
+      className="group relative"
+    >
+      <button
+        type="button"
+        onClick={() => onOpen(dish)}
+        className="block w-full cursor-pointer text-left"
+        aria-label={`${dish.name}, ${dish.price}. View details.`}
+      >
+        <div className="relative overflow-hidden rounded-xl border border-line/80 bg-coal">
+          <img
+            src={dish.image}
+            alt={dish.name}
+            loading="lazy"
+            decoding="async"
+            width="600"
+            height="750"
+            className="aspect-[4/5] w-full object-cover transition-transform duration-[1100ms] ease-silk group-hover:scale-[1.06]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-75" />
+
+          <span className="absolute left-3.5 top-3.5 rounded-full border border-line bg-ink/70 px-2.5 py-1 text-[8px] uppercase tracking-[0.24em] text-cream/80 backdrop-blur-sm">
+            {dish.category}
+          </span>
+
+          {dish.tag && (
+            <span className="absolute right-3.5 top-3.5 rounded-full bg-gold px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-ink">
+              {dish.tag}
+            </span>
+          )}
+
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <div className="flex items-baseline justify-between gap-4">
+              <h3 className="min-w-0 font-serif text-[1.28rem] leading-[1.15] text-cream transition-colors duration-300 group-hover:text-gold-light">
+                {dish.name}
+              </h3>
+              <span className="shrink-0 rounded-full border border-line/70 bg-ink/70 px-2 py-0.5 font-serif text-[0.95rem] tabular-nums text-gold-light backdrop-blur-sm">
+                {dish.price}
+              </span>
+            </div>
+            <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-sand/80">
+              {dish.description}
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.26em] text-cream/55 transition-colors duration-300 group-hover:text-gold-light">
+              <Plus className="size-3" aria-hidden="true" />
+              Details
+            </span>
+          </div>
+        </div>
+      </button>
+    </motion.article>
+  );
+}
 
 export function Menu() {
+  const [category, setCategory] = useState("All");
+  const [openDish, setOpenDish] = useState(null);
+  const [toast, setToast] = useState("");
+  const reduce = useReducedMotion();
+
+  const filtered = useMemo(
+    () => (category === "All" ? dishes : dishes.filter((dish) => dish.category === category)),
+    [category],
+  );
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(""), 4200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  const closeDish = () => setOpenDish(null);
+
   return (
     <section
       id="menu"
-      className="relative scroll-mt-24 overflow-hidden bg-savora-dark pt-20 lg:pt-28 pb-16 lg:pb-24"
       aria-labelledby="menu-heading"
+      className="relative scroll-mt-24 overflow-hidden border-t border-line/60 bg-ink py-20 lg:py-28"
     >
-      {/* Background atmosphere - sophisticated layered depth */}
-      <div className="absolute inset-0 z-0" aria-hidden="true">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-savora-dark via-savora-charcoal to-savora-dark" />
-        {/* Central amber glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-gradient-to-r from-savora-gold/10 via-savora-gold/5 to-transparent blur-3xl opacity-60" />
-        {/* Subtle vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-savora-dark/80 via-transparent to-savora-dark/80" />
-        {/* Top accent line */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-px bg-gradient-to-r from-transparent via-savora-gold/30 to-transparent" />
-        {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-px bg-gradient-to-r from-transparent via-savora-gold/30 to-transparent" />
-        {/* Noise texture overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} />
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="absolute left-1/2 top-0 h-px w-[70%] -translate-x-1/2 bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+        <div className="absolute left-1/2 top-24 size-[46rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(198,164,106,0.09),transparent_65%)]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header - Refined typography with Playfair Display */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-center mb-10 lg:mb-12"
-        >
-          {/* Eyebrow - refined with gold keyline */}
-          <div className="flex items-center justify-center gap-3 mb-5">
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-savora-gold/50 to-transparent" />
-            <span className="relative px-4 py-1.5 text-savora-cream text-sm font-medium tracking-[0.3em] uppercase">
-              DINNER MENU
-              <span className="absolute bottom-[2px] left-1/2 -translate-x-1/2 w-[60%] h-0.5 bg-gradient-to-r from-transparent via-savora-gold to-transparent rounded-full" />
-            </span>
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-savora-gold/50 to-transparent" />
+      <div className="section-shell relative">
+        <SectionHeading
+          id="menu-heading"
+          eyebrow="The Menu"
+          title={
+            <>
+              Cooked over fire,
+              <br />
+              <span className="italic text-gold-light">served with intent.</span>
+            </>
+          }
+          copy="Twelve plates, one grill, nothing frozen. Pick a plate from the belt or browse the full card below."
+        />
+
+        {/* Conveyor — original animation, retinted */}
+        <Reveal delay={0.1} className="mt-12 lg:mt-14">
+          <div className="relative rounded-2xl border border-line/70 bg-gradient-to-b from-coal/60 to-ink/40 px-3 py-6 sm:px-6 sm:py-8">
+            <SushiConveyorMenu
+              items={dishes}
+              eyebrow=""
+              heading=""
+              caption="Drag the belt, or pick a plate to read tonight's dish."
+              speed={20}
+              autoplay
+              interval={3800}
+              legend={{}}
+              labels={{
+                add: "Reserve for this dish",
+                close: "Close",
+                previous: "Previous dish",
+                next: "Next dish",
+                pause: "Pause the belt",
+              }}
+              onAdd={(item) => setToast(`${item.name} — noted for your table request`)}
+              className="mx-auto max-w-4xl bg-transparent"
+            />
           </div>
-          {/* Heading - Playfair Display, gold accent on "Featured Selections" */}
-          <h2 id="menu-heading" className="font-serif text-4xl sm:text-5xl lg:text-6xl font-light leading-[1.05] tracking-tight text-white">
-            Featured
-            <br />
-            <span className="font-medium text-savora-gold-light">Selections</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-balance text-lg leading-relaxed text-neutral-400 sm:text-xl">
-            Handcrafted dishes made with premium ingredients and time-honored techniques.
-            Pick a plate to discover more.
-          </p>
-        </motion.div>
+        </Reveal>
 
-        {/* Conveyor Menu Wrapper - sophisticated belt presentation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.15 }}
-          className="relative"
-        >
-          {/* Conveyor ambient glow */}
-          <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
-            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-full h-full max-w-5xl bg-gradient-to-b from-savora-gold/5 via-transparent to-transparent blur-2xl opacity-30" />
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full h-32 bg-gradient-to-t from-savora-gold/8 via-transparent to-transparent blur-xl opacity-20" />
+        <AnimatePresence>
+          {toast && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              role="status"
+              className="mx-auto mt-4 flex max-w-md items-center justify-center gap-2 rounded-full border border-line bg-coal/80 px-4 py-2 text-center text-[11px] tracking-wide text-cream/85"
+            >
+              <Check className="size-3.5 text-gold" aria-hidden="true" />
+              {toast}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Featured cut */}
+        <Reveal className="mt-16 lg:mt-24">
+          <div className="grid overflow-hidden rounded-2xl border border-line bg-coal/40 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative min-h-[18rem] overflow-hidden lg:min-h-[26rem]">
+              <img
+                src={featured.image}
+                alt="Tomahawk ribeye sliced to reveal a medium-rare centre"
+                loading="lazy"
+                decoding="async"
+                className="size-full object-cover transition-transform duration-[1400ms] ease-silk hover:scale-[1.04]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-coal/40" />
+              <span className="absolute left-5 top-5 rounded-full border border-gold/40 bg-ink/70 px-3 py-1.5 text-[9px] uppercase tracking-[0.28em] text-gold-light backdrop-blur-sm">
+                Chef&rsquo;s cut · limited nightly
+              </span>
+            </div>
+
+            <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+              <p className="eyebrow">
+                <span className="gold-rule" aria-hidden="true" />
+                The signature
+              </p>
+              <h3 className="mt-4 font-serif text-3xl font-light leading-tight text-cream sm:text-[2.6rem]">
+                Dry-Aged
+                <br />
+                <span className="italic text-gold-light">Tomahawk for Two</span>
+              </h3>
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-sand">
+                Thirty-two ounces of bone-in ribeye, rested for twenty-eight days, seared hard over
+                white oak and carved beside the table. Served with bone marrow butter and charred
+                spring onions.
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-[0.2em] text-sand/65">
+                <span>32 oz</span>
+                <span className="size-1 rotate-45 bg-gold/50" aria-hidden="true" />
+                <span>45 min over oak</span>
+                <span className="size-1 rotate-45 bg-gold/50" aria-hidden="true" />
+                <span>Carved tableside</span>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-5">
+                <span className="font-serif text-4xl text-cream">$145</span>
+                <a href="#reserve" className="btn-gold">
+                  Reserve for Two
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setOpenDish(featured)}
+                  className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.24em] text-cream/60 transition-colors hover:text-gold-light"
+                >
+                  Details
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
+        </Reveal>
 
-          <SushiConveyorMenu
-            items={dishes}
-            eyebrow=""
-            heading=""
-            caption="Drag the belt, or pick a plate to explore tonight's dish."
-            speed={22}
-            autoplay={true}
-            interval={3500}
-            // The tier cards below already explain the pricing — hide the belt's
-            // derived legend by handing it an empty map.
-            legend={{}}
-            labels={{
-              add: "Add to order",
-              close: "Close",
-              previous: "Previous dish",
-              next: "Next dish",
-              pause: "Pause conveyor",
-            }}
-            onAdd={(item) => {
-              console.log("Added to order:", item.name);
-            }}
-            className="mx-auto max-w-4xl bg-transparent"
-          />
-        </motion.div>
+        {/* Filters */}
+        <div className="mt-16 flex flex-col gap-6 border-t border-line/60 pt-10 sm:mt-20 lg:flex-row lg:items-end lg:justify-between">
+          <Reveal>
+            <p className="font-serif text-2xl font-light text-cream sm:text-3xl">The full card</p>
+            <p className="mt-1.5 text-[12px] uppercase tracking-[0.22em] text-sand/60" aria-live="polite">
+              {filtered.length} {filtered.length === 1 ? "plate" : "plates"}
+              {category !== "All" ? ` · ${category}` : ""}
+            </p>
+          </Reveal>
 
-        {/* Legend / Tier Guide - Refined gold/cream palette cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 }}
-          className="mt-10"
-        >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
-            {tierData.map((t) => (
-              <motion.div
-                key={t.tier}
-                whileHover={{ y: -3, boxShadow: "0 20px 40px -20px rgba(217, 119, 6, 0.25)" }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="group relative p-4 sm:p-5 rounded-xl bg-savora-charcoal/60 border border-neutral-800 hover:border-savora-gold/40 transition-all duration-300 backdrop-blur-sm"
-              >
-                {/* Subtle top gold accent line */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-gradient-to-r from-transparent via-savora-gold/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center gap-3 mb-2.5">
-                  {/* Tier indicator dot with gold ring */}
-                  <div className="relative flex-shrink-0">
-                    <span className={`w-3 h-3 rounded-full ${t.color} relative z-10`} />
-                    <span className="absolute inset-0 rounded-full border-2 border-savora-gold/30 scale-125 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                  </div>
-                  <span className="text-sm font-medium text-savora-cream uppercase tracking-wider">{t.label}</span>
-                </div>
-                <p className="text-savora-gold font-mono text-lg font-medium tabular-nums">{t.range}</p>
-                {/* Subtle bottom shimmer */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-px bg-gradient-to-r from-transparent via-savora-gold/20 to-transparent" />
-              </motion.div>
+          <Reveal delay={0.1}>
+            <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Filter the menu">
+              {categories.map((item) => {
+                const selected = item === category;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setCategory(item)}
+                    aria-pressed={selected}
+                    className={`relative isolate shrink-0 rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 ${
+                      selected
+                        ? "border-gold/60 text-ink"
+                        : "border-line/70 text-cream/60 hover:border-gold/40 hover:text-cream"
+                    }`}
+                  >
+                    {selected && (
+                      <motion.span
+                        layoutId="menu-filter-pill"
+                        transition={{ duration: reduce ? 0 : 0.4, ease: EASE }}
+                        className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-gold-light to-gold"
+                      />
+                    )}
+                    <span className="relative">{item}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Dish grid */}
+        <motion.div layout className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((dish, i) => (
+              <DishCard key={dish.id} dish={dish} index={i} onOpen={setOpenDish} />
             ))}
-          </div>
+          </AnimatePresence>
         </motion.div>
 
-        {/* CTA - Refined gold gradient with sophisticated hover effects */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.45 }}
-          className="mt-10 text-center"
-        >
+        <Reveal className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-line/60 pt-7 sm:flex-row">
+          <p className="text-[11px] leading-relaxed text-sand/60">
+            Prices exclude tax and service. Dietary adaptations with 24 hours&rsquo; notice.
+          </p>
           <a
-            href="#experiences"
-            className="relative inline-flex items-center justify-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-savora-gold via-savora-gold-light to-savora-gold text-savora-dark font-medium text-lg hover:from-savora-gold-light hover:via-savora-gold hover:to-savora-gold-light active:scale-[0.97] transition-all duration-400 ease-out shadow-[0_8px_32px_-8px_rgba(217,119,6,0.4),0_0_0_1px_rgba(217,119,6,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-savora-gold focus-visible:ring-offset-2 focus-visible:ring-offset-savora-dark overflow-hidden"
-            style={{ backgroundSize: "200% 100%" }}
+            href="#reserve"
+            className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.26em] text-gold-light transition-colors hover:text-cream"
           >
-            {/* Shine sweep effect */}
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden="true" />
-            <span className="relative z-10">Reserve a Table</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="relative z-10 transition-transform group-hover:translate-x-1">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+            Book your table
+            <ArrowRight
+              className="size-3.5 transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
           </a>
-          <p className="mt-4 text-neutral-500 text-sm">Or <a href="#experiences" className="text-savora-gold hover:text-savora-gold-light underline underline-offset-2 transition-colors duration-200">book the chef&rsquo;s table</a></p>
-        </motion.div>
+        </Reveal>
       </div>
+
+      <DishDialog dish={openDish} onClose={closeDish} />
     </section>
   );
 }

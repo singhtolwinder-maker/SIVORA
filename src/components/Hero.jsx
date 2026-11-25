@@ -1,559 +1,199 @@
-import { motion } from "motion/react";
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { ArrowDown, ArrowRight, Star } from "lucide-react";
+import { Magnetic } from "./ui/Magnetic";
+
+const EASE = [0.16, 1, 0.3, 1];
+
+const facts = [
+  { value: "28", unit: "days", label: "Dry-aged in-house" },
+  { value: "Oak", unit: "fire", label: "No gas, ever" },
+  { value: "240", unit: "labels", label: "Cellar & bourbon" },
+];
+
+const line = {
+  hidden: { y: "115%" },
+  visible: (i) => ({
+    y: "0%",
+    transition: { duration: 1.15, delay: 0.15 + i * 0.12, ease: EASE },
+  }),
+};
 
 export function Hero() {
-  const heroRef = useRef(null);
-  const foodImageRef = useRef(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isInView, setIsInView] = useState(false);
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 2;
-      const y = (e.clientY / innerHeight - 0.5) * 2;
-      setMousePosition({ x, y });
-    };
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const maxScroll = window.innerHeight;
-      setScrollProgress(Math.min(scrollY / maxScroll, 1));
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-    if (heroRef.current) observer.observe(heroRef.current);
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.15,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.85,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
-
-  const headingVariants = {
-    hidden: { opacity: 0, y: 40, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 1.1,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
-
-  const imageVariants = {
-    hidden: { opacity: 0, scale: 0.96, filter: "blur(24px)" },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      filter: "blur(0px)",
-      transition: {
-        duration: 1.5,
-        ease: [0.16, 1, 0.3, 1],
-        delay: 0.3,
-      },
-    },
-  };
-
-  const badgeVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.7,
-        ease: [0.16, 1, 0.3, 1],
-        delay: 0.1,
-      },
-    },
-  };
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "16%"]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 70]);
+  const fade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   return (
     <section
-      ref={heroRef}
+      ref={ref}
       id="home"
-      className="relative flex min-h-screen scroll-mt-24 items-center justify-center overflow-hidden bg-[#050505] pt-20"
       aria-labelledby="hero-heading"
-      style={{ willChange: "transform" }}
+      className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden bg-ink pt-24"
     >
-      {/* Background Atmosphere Layers - Deep Black/Charcoal with Refined Gold */}
-      <div className="absolute inset-0 z-0" aria-hidden="true">
-        {/* Deep base - pure black */}
-        <div className="absolute inset-0 bg-[#050505]" />
-
-        {/* Charcoal gradient layer */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#050505] to-[#000000]" />
-
-        {/* Primary radial warmth - center, refined gold */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full bg-gradient-to-r from-amber-900/12 via-amber-800/4 to-transparent blur-3xl opacity-70"
-          style={{ filter: "blur(140px)" }}
+      {/* Cinematic backdrop */}
+      <motion.div style={reduce ? undefined : { y: imageY }} className="absolute inset-0 z-0 scale-[1.08]">
+        <img
+          src="/images/interior-night.jpg"
+          alt=""
+          width="1392"
+          height="752"
+          fetchPriority="high"
+          decoding="async"
+          className="size-full object-cover object-center brightness-[1.22] contrast-[1.03] saturate-[1.05]"
         />
-
-        {/* Secondary glow - lower right, subtle ivory warmth */}
-        <div
-          className="absolute bottom-0 right-0 w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-amber-700/8 via-amber-600/3 to-transparent blur-3xl opacity-50"
-          style={{ filter: "blur(120px)", transform: "translate(35%, 35%)" }}
-        />
-
-        {/* Top accent glow - warm ivory */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-b from-amber-800/6 via-amber-700/2 to-transparent blur-3xl opacity-40"
-        />
-
-        {/* Deep vignette for cinematic depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-black/40" />
-
-        {/* Subtle grain texture overlay for film-like quality */}
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }}
-        />
-
-        {/* Elegant top border line - refined gold */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-amber-600/30 to-transparent"
-        />
-
-        {/* Subtle radial highlight for depth perception */}
-        <div
-          className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-amber-500/3 to-transparent blur-3xl opacity-30"
-          style={{ filter: "blur(80px)" }}
-        />
-      </div>
-
-      {/* Floating Ambient Particles - Gold/Ivory dust motes */}
-      <div className="absolute inset-0 z-[5] pointer-events-none overflow-hidden" aria-hidden="true">
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <motion.div
-            key={i}
-            initial={false}
-            animate={{
-              y: [0, -30 + i * 3, 0],
-              x: [0, 20 - i * 2, 0],
-              opacity: [0.08, 0.25, 0.08],
-              scale: [0.7, 1.3, 0.7],
-            }}
-            transition={{
-              duration: 20 + i * 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 2.5,
-            }}
-            className="absolute rounded-full bg-gradient-to-r from-amber-300/40 to-amber-500/20 blur-xl"
-            style={{
-              width: 3 + i * 1.5,
-              height: 3 + i * 1.5,
-              top: 12 + i * 11,
-              left: 8 + i * 16,
-            }}
-          />
-        ))}
-        {[0, 1, 2, 3, 4].map((i) => (
-          <motion.div
-            key={`right-${i}`}
-            initial={false}
-            animate={{
-              y: [0, -25 + i * 2, 0],
-              x: [0, -15 + i, 0],
-              opacity: [0.06, 0.2, 0.06],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: 22 + i * 5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1.5 + i * 3,
-            }}
-            className="absolute rounded-full bg-gradient-to-r from-amber-200/30 to-amber-400/15 blur-xl"
-            style={{
-              width: 2.5 + i,
-              height: 2.5 + i,
-              top: 20 + i * 16,
-              right: 12 + i * 14,
-            }}
-          />
-        ))}
-        {/* Ivory particles near center */}
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={`center-${i}`}
-            initial={false}
-            animate={{
-              y: [0, -18, 0],
-              x: [0, 10 - i * 5, 0],
-              opacity: [0.1, 0.3, 0.1],
-              scale: [0.9, 1.15, 0.9],
-            }}
-            transition={{
-              duration: 16 + i * 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.5 + i * 2,
-            }}
-            className="absolute rounded-full bg-gradient-to-r from-amber-100/40 to-amber-200/20 blur-lg"
-            style={{
-              width: 4 + i,
-              height: 4 + i,
-              top: "45%",
-              left: "48%",
-              transform: `translate(-50%, -50%) rotate(${i * 120}deg) translateX(120px)`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
-          {/* Content Column - Left */}
-          <div className="relative z-20">
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate={isInView ? "visible" : "hidden"}
-              className="space-y-8"
-            >
-              {/* Eyebrow / Badge - Refined Gold */}
-              <motion.span
-                variants={badgeVariants}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-amber-600/30 text-[11px] font-medium tracking-[0.35em] uppercase text-amber-300"
-              >
-                <span className="relative flex h-1.5 w-1.5">
-                  <motion.span
-                    className="absolute inset-0 h-1.5 w-1.5 rounded-full bg-amber-400 opacity-90"
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.9, 1, 0.9] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <span className="relative h-1.5 w-1.5 rounded-full bg-amber-400" />
-                </span>
-                SAVORA — Est. 2024
-              </motion.span>
-
-              {/* Main Headline - "A Taste Worth Remembering" */}
-              <motion.h1
-                id="hero-heading"
-                variants={headingVariants}
-                className="relative font-serif text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-light leading-[1.02] tracking-tight text-white max-w-none"
-                style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
-              >
-                <span className="block bg-gradient-to-r from-white via-amber-50 to-amber-200 bg-clip-text text-transparent">
-                  A Taste Worth Remembering
-                </span>
-                {/* Decorative underline - refined gold */}
-                <span
-                  className="absolute -bottom-3 left-0 w-32 h-px bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 opacity-70"
-                  aria-hidden="true"
-                />
-              </motion.h1>
-
-              {/* Supporting Text */}
-              <motion.p
-                variants={itemVariants}
-                className="text-base sm:text-lg lg:text-xl text-neutral-300/85 leading-relaxed max-w-xl font-light tracking-wide"
-              >
-                Discover exceptional food, unforgettable flavours, and moments worth sharing.
-              </motion.p>
-
-              {/* CTA Buttons */}
-              <motion.div
-                variants={itemVariants}
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
-              >
-                {/* Primary CTA - "Explore Our Menu" */}
-                <motion.a
-                  href="#menu"
-                  whileHover={{ scale: 1.02, y: -3, boxShadow: "0 25px 60px -20px rgba(217,119,6,0.5)" }}
-                  whileTap={{ scale: 0.97 }}
-                  className="relative group inline-flex items-center justify-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-[#050505] font-medium text-lg tracking-wide overflow-hidden shadow-[0_20px_50px_-15px_rgba(217,119,6,0.4)] transition-all duration-500 ease-out"
-                >
-                  {/* Shine sweep effect - refined gold */}
-                  <span
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full"
-                    style={{ transform: "skewX(-20deg)" }}
-                  >
-                    <motion.span
-                      initial={{ x: "-120%" }}
-                      animate={{ x: "120%" }}
-                      transition={{ duration: 3.5, repeat: Infinity, ease: "linear", delay: 1.2 }}
-                      className="absolute inset-0"
-                    />
-                  </span>
-                  {/* Subtle inner glow */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-amber-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" aria-hidden="true" />
-                  <span className="relative z-10">Explore Our Menu</span>
-                  <motion.svg
-                    className="relative z-10 size-5 stroke-current transition-transform duration-300 group-hover:translate-x-1"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </motion.svg>
-                </motion.a>
-
-                {/* Secondary CTA - Glass/Ivory */}
-                <motion.a
-                  href="#experiences"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.12)", borderColor: "rgba(251,191,36,0.5)" }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-amber-600/40 bg-white/5 backdrop-blur-md text-amber-100 font-medium text-lg tracking-wide hover:bg-white/10 hover:border-amber-500/60 hover:text-white transition-all duration-300 ease-out"
-                >
-                  Reserve a Table
-                </motion.a>
-              </motion.div>
-
-              {/* Trust Indicators / Stats */}
-              <motion.div
-                variants={itemVariants}
-                className="flex flex-wrap items-center gap-6 sm:gap-10 pt-6 border-t border-white/10"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-600/5 border border-amber-500/30">
-                    <svg className="size-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm tracking-wide">Reservations</p>
-                    <p className="text-neutral-400 text-xs">Available Daily</p>
-                  </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-3">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-600/5 border border-amber-500/30">
-                    <svg className="size-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 6v6l4 2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm tracking-wide">Tue – Sun</p>
-                    <p className="text-neutral-400 text-xs">5 PM – 11:30 PM</p>
-                  </div>
-                </div>
-                <div className="hidden md:flex items-center gap-3">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-600/5 border border-amber-500/30">
-                    <svg className="size-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M21 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4" />
-                      <path d="M3 10h18M7 10v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm tracking-wide">Private Dining</p>
-                    <p className="text-neutral-400 text-xs">Up to 40 Guests</p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Visual Column - Right: Premium American Food Photography */}
-          <div className="relative z-10">
-            <motion.div
-              variants={imageVariants}
-              initial="hidden"
-              animate={isInView ? "visible" : "hidden"}
-              className="relative"
-              role="img"
-              aria-label="Premium dry-aged ribeye steak with herb compound butter, charred edges, served on warm cast iron with roasted garlic, fresh thyme, and crispy shallots - fine dining presentation"
-            >
-              {/* Multi-layer ambient glow behind image */}
-              <div
-                className="absolute -inset-8 lg:-inset-12 -z-10 rounded-3xl bg-gradient-to-br from-amber-900/25 via-amber-800/8 to-transparent blur-3xl opacity-60"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute -inset-4 lg:-inset-6 -z-10 rounded-3xl bg-gradient-to-br from-amber-700/15 to-transparent blur-2xl opacity-40"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute -inset-1 lg:-inset-2 -z-10 rounded-3xl bg-gradient-to-tr from-amber-600/10 to-transparent blur-xl opacity-30"
-                aria-hidden="true"
-              />
-
-              {/* Elegant frame/border - refined gold */}
-              <div className="absolute inset-0 rounded-3xl border border-amber-700/40 bg-gradient-to-tr from-amber-600/8 to-transparent opacity-60" aria-hidden="true" />
-              <div className="absolute inset-0 rounded-3xl border border-white/5" aria-hidden="true" />
-
-              {/* Image Container */}
-              <div className="relative rounded-2xl overflow-hidden">
-                <img
-                  ref={foodImageRef}
-                  src="/images/hero-steak.jpg"
-                  alt=""
-                  className="w-full h-auto object-cover aspect-[4/3] sm:aspect-[5/4] lg:aspect-[4/3] transition-opacity duration-1000 ease-out"
-                  style={{
-                    opacity: isLoaded ? 1 : 0,
-                    transform: `translate3d(${mousePosition.x * 8}px, ${mousePosition.y * 8}px, 0) scale(${1 + Math.abs(mousePosition.x) * 0.01})`,
-                    willChange: "transform, opacity",
-                  }}
-                  onLoad={() => setIsLoaded(true)}
-                  loading="eager"
-                  fetchPriority="high"
-                  width="1400"
-                  height="1050"
-                />
-
-                {/* Subtle vignette overlay on image for depth */}
-                <div
-                  className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/8 to-transparent pointer-events-none"
-                  aria-hidden="true"
-                />
-                <div
-                  className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent pointer-events-none"
-                  aria-hidden="true"
-                />
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-black/15 via-transparent to-black/15 pointer-events-none"
-                  aria-hidden="true"
-                />
-
-                {/* Bottom gold accent line */}
-                <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 h-px bg-gradient-to-r from-transparent via-amber-400/70 to-transparent"
-                  aria-hidden="true"
-                />
-
-                {/* Corner accents - refined gold brackets */}
-                <div className="absolute top-4 left-4 w-[72px] h-[72px] border-t-2 border-l-2 border-amber-400/50 rounded-tl-xl" aria-hidden="true" />
-                <div className="absolute top-4 right-4 w-[72px] h-[72px] border-t-2 border-r-2 border-amber-400/50 rounded-tr-xl" aria-hidden="true" />
-                <div className="absolute bottom-4 left-4 w-[72px] h-[72px] border-b-2 border-l-2 border-amber-400/50 rounded-bl-xl" aria-hidden="true" />
-                <div className="absolute bottom-4 right-4 w-[72px] h-[72px] border-b-2 border-r-2 border-amber-400/50 rounded-br-xl" aria-hidden="true" />
-
-                {/* Inner corner highlights */}
-                <div className="absolute top-4 left-4 w-[72px] h-[72px] border-t-2 border-l-2 border-amber-200/20 rounded-tl-xl" aria-hidden="true" />
-                <div className="absolute top-4 right-4 w-[72px] h-[72px] border-t-2 border-r-2 border-amber-200/20 rounded-tr-xl" aria-hidden="true" />
-                <div className="absolute bottom-4 left-4 w-[72px] h-[72px] border-b-2 border-l-2 border-amber-200/20 rounded-bl-xl" aria-hidden="true" />
-                <div className="absolute bottom-4 right-4 w-[72px] h-[72px] border-b-2 border-r-2 border-amber-200/20 rounded-br-xl" aria-hidden="true" />
-              </div>
-
-              {/* Floating label/badge on image - premium quality indicator */}
-              <motion.div
-                initial={false}
-                animate={{ y: [0, -10, 0], opacity: [0.85, 1, 0.85] }}
-                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-500/40 bg-black/85 px-4 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-amber-100 shadow-[0_15px_50px_-15px_rgba(0,0,0,0.6)] backdrop-blur-md sm:px-6 sm:py-3 sm:text-xs sm:tracking-widest"
-              >
-                Dry-Aged 28 Days • USDA Prime
-              </motion.div>
-
-              {/* Subtle floating glow beneath badge */}
-              <motion.div
-                initial={false}
-                animate={{ scale: [1, 1.08, 1], opacity: [0.25, 0.45, 0.25] }}
-                transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-gradient-to-r from-amber-500/15 to-transparent blur-3xl"
-                aria-hidden="true"
-              />
-
-              {/* Premium steak temperature indicator */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute top-6 right-6 px-4 py-2.5 rounded-full bg-black/70 backdrop-blur-sm border border-amber-600/40 text-amber-200 text-xs font-medium tracking-wider uppercase shadow-[0_8px_30px_-8px_rgba(0,0,0,0.5)]"
-              >
-                Medium Rare • 130°F
-              </motion.div>
-            </motion.div>
-
-            {/* Decorative geometric elements - refined gold */}
-            <div className="absolute -top-10 -right-10 w-36 h-36 border-2 border-amber-500/15 rounded-full" aria-hidden="true" />
-            <div className="absolute -bottom-10 -left-10 w-28 h-28 border-2 border-amber-500/10 rounded-full" aria-hidden="true" />
-            <div className="absolute top-1/2 -right-14 w-px h-40 bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" aria-hidden="true" />
-
-            {/* Additional geometric accent - bottom left */}
-            <div className="absolute bottom-20 left-20 w-2 h-24 bg-gradient-to-b from-amber-400/30 to-transparent rounded-full" aria-hidden="true" />
-            <div className="absolute bottom-20 left-20 w-24 h-2 bg-gradient-to-r from-amber-400/30 to-transparent rounded-full" aria-hidden="true" />
-
-            {/* Floating line accent - top right */}
-            <div className="absolute top-20 right-20 w-32 h-px bg-gradient-to-r from-transparent to-amber-400/30" aria-hidden="true" />
-            <div className="absolute top-20 right-20 w-px h-16 bg-gradient-to-b from-transparent to-amber-400/30" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="absolute bottom-8 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-3 text-neutral-500/60 lg:flex"
-        aria-hidden="true"
-      >
-        <span className="text-[10px] font-medium tracking-[0.4em] uppercase text-neutral-400/50">Scroll to Discover</span>
-        <motion.div
-          animate={{ y: [0, 12, 0], opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-amber-400/80"
-          >
-            <path d="M12 5v14M19 12l-7 7-7-7" />
-          </svg>
-        </motion.div>
       </motion.div>
 
-      {/* Scroll Progress Bar - refined gold */}
+      {/* Light shaping */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-ink via-ink/70 to-ink/10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-ink via-ink/10 to-ink/60" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(60%_60%_at_18%_50%,rgba(17,17,15,0.72),transparent_72%)]" aria-hidden="true" />
+      <div className="grain pointer-events-none absolute inset-0 z-0 opacity-[0.05]" aria-hidden="true" />
+
       <motion.div
-        className="fixed top-0 left-0 h-px w-full z-50 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 origin-left"
-        style={{
-          transform: `scaleX(${scrollProgress})`,
-          transformOrigin: "left center",
-        }}
-        aria-hidden="true"
-      />
+        style={reduce ? undefined : { y: contentY, opacity: fade }}
+        className="section-shell relative z-10 w-full pb-12 pt-16 sm:pb-16 lg:pb-20"
+      >
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end">
+          {/* Editorial column */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
+              className="flex flex-wrap items-center gap-x-5 gap-y-3"
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-line bg-ink/40 px-3.5 py-1.5 text-[9px] font-medium uppercase tracking-[0.3em] text-cream/75 backdrop-blur-sm">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-gold opacity-70 motion-reduce:animate-none" />
+                  <span className="relative size-1.5 rounded-full bg-gold-light" />
+                </span>
+                West Village · Est. 2024
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.24em] text-sand/75">
+                <Star className="size-3 fill-gold text-gold" aria-hidden="true" />
+                4.9 · 2,400 reviews
+              </span>
+            </motion.div>
+
+            <h1
+              id="hero-heading"
+              className="mt-7 font-serif text-[3.15rem] font-light leading-[0.98] tracking-[-0.015em] text-cream sm:text-[4.5rem] lg:text-[5.5rem] xl:text-[6.4rem]"
+            >
+              <span className="block overflow-hidden pb-[0.06em]">
+                <motion.span custom={0} variants={line} initial="hidden" animate="visible" className="block">
+                  A Taste
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden pb-[0.06em]">
+                <motion.span custom={1} variants={line} initial="hidden" animate="visible" className="block">
+                  Worth
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden pb-[0.08em]">
+                <motion.span
+                  custom={2}
+                  variants={line}
+                  initial="hidden"
+                  animate="visible"
+                  className="block italic text-gold-light"
+                >
+                  Remembering
+                </motion.span>
+              </span>
+            </h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.75, ease: EASE }}
+              className="mt-7 max-w-lg text-[15px] leading-relaxed text-cream/70 sm:text-lg"
+            >
+              Dry-aged beef, live oak fire and a dining room built for long evenings. American
+              cooking with the patience it deserves.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.9, ease: EASE }}
+              className="mt-9 flex flex-col items-start gap-3.5 sm:flex-row sm:items-center"
+            >
+              <Magnetic>
+                <a href="#reserve" className="btn-gold w-full sm:w-auto">
+                  Reserve a Table
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </a>
+              </Magnetic>
+              <Magnetic>
+                <a href="#menu" className="btn-ghost w-full sm:w-auto">
+                  Explore the Menu
+                </a>
+              </Magnetic>
+            </motion.div>
+          </div>
+
+          {/* Detail column */}
+          <motion.div
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1, ease: EASE }}
+            className="w-full lg:justify-self-end"
+          >
+            <div className="relative max-w-sm border border-line bg-ink/80 p-6 shadow-[0_40px_90px_-50px_rgba(0,0,0,0.95)] backdrop-blur-md sm:p-7 lg:ml-auto">
+              <span className="pointer-events-none absolute left-0 top-0 h-8 w-px bg-gold/60" aria-hidden="true" />
+              <span className="pointer-events-none absolute left-0 top-0 h-px w-8 bg-gold/60" aria-hidden="true" />
+              <span className="pointer-events-none absolute bottom-0 right-0 h-8 w-px bg-gold/60" aria-hidden="true" />
+              <span className="pointer-events-none absolute bottom-0 right-0 h-px w-8 bg-gold/60" aria-hidden="true" />
+
+              <p className="text-[9px] uppercase tracking-[0.32em] text-gold/80">Tonight at SAVORA</p>
+              <p className="mt-3 font-serif text-[1.6rem] leading-snug text-cream">
+                Five o&rsquo;clock fire,
+                <br />
+                <span className="italic text-gold-light">until late.</span>
+              </p>
+
+              <dl className="mt-6 divide-y divide-line/70 border-y border-line/70">
+                {facts.map((fact) => (
+                  <div key={fact.label} className="flex items-baseline justify-between gap-4 py-3">
+                    <dt className="text-[11px] uppercase tracking-[0.18em] text-sand/70">{fact.label}</dt>
+                    <dd className="font-serif text-lg text-cream">
+                      {fact.value}
+                      <span className="ml-1.5 text-[10px] uppercase tracking-[0.18em] text-sand/60">
+                        {fact.unit}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <p className="mt-5 text-[11px] leading-relaxed text-sand/65">
+                Walk-ins welcome at the bar. Smart casual. Kitchen closes thirty minutes before the
+                room.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Bottom cue */}
+      <div className="section-shell relative z-10 hidden pb-7 lg:block">
+        <div className="flex items-center justify-between border-t border-line/60 pt-5">
+          <span className="text-[9px] uppercase tracking-[0.36em] text-sand/50">Scroll to discover</span>
+          <motion.span
+            aria-hidden="true"
+            animate={reduce ? undefined : { y: [0, 7, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-flex size-9 items-center justify-center rounded-full border border-line text-gold/80"
+          >
+            <ArrowDown className="size-3.5" />
+          </motion.span>
+          <span className="text-[9px] uppercase tracking-[0.36em] text-sand/50">40.7191° N · 74.0087° W</span>
+        </div>
+      </div>
     </section>
   );
 }

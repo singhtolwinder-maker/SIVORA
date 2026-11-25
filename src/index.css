@@ -4,59 +4,59 @@
 
 :root {
   /* ---------------------------------------------------------------
-     SAVORA brand palette
+     SAVORA palette
   ---------------------------------------------------------------- */
-  --savora-gold: #d97706;
-  --savora-gold-light: #f59e0b;
-  --savora-gold-dark: #b45309;
-  --savora-cream: #fef3c7;
-  --savora-dark: #0a0a0a;
-  --savora-charcoal: #1a1a2e;
+  --ink: #11110f;
+  --coal: #191916;
+  --cream: #f4efe6;
+  --muted-gold: #c6a46a;
+  --accent-gold: #d9b77a;
+  --text: #f5f0e8;
+  --text-soft: #a9a399;
+  --line: rgba(198, 164, 106, 0.22);
 
-  /* ---------------------------------------------------------------
-     Semantic tokens (HSL triplets, consumed by tailwind.config.js)
-  ---------------------------------------------------------------- */
-  --background: 0 0% 4%;
-  --foreground: 40 20% 96%;
+  /* Semantic tokens (HSL triplets consumed by tailwind.config.js) */
+  --background: 60 6% 6%;
+  --foreground: 40 33% 93%;
 
-  --card: 0 0% 6%;
-  --card-foreground: 40 20% 96%;
+  --card: 60 5% 10%;
+  --card-foreground: 40 33% 93%;
 
-  --popover: 0 0% 5%;
-  --popover-foreground: 40 20% 96%;
+  --popover: 60 5% 8%;
+  --popover-foreground: 40 33% 93%;
 
-  --primary: 32 95% 44%;
-  --primary-foreground: 0 0% 4%;
+  --primary: 38 35% 60%;
+  --primary-foreground: 60 6% 6%;
 
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 40 20% 96%;
+  --secondary: 60 4% 14%;
+  --secondary-foreground: 40 33% 93%;
 
-  --muted: 0 0% 11%;
-  --muted-foreground: 40 8% 66%;
+  --muted: 60 4% 13%;
+  --muted-foreground: 40 6% 63%;
 
-  --accent: 30 30% 14%;
-  --accent-foreground: 38 92% 70%;
+  --accent: 40 20% 16%;
+  --accent-foreground: 38 53% 66%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 6 62% 52%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 40 8% 20%;
-  --input: 40 8% 20%;
-  --ring: 32 95% 50%;
+  --border: 40 10% 25%;
+  --input: 40 10% 25%;
+  --ring: 38 46% 59%;
 
-  /* Price tiers — warm gold through to deep ember */
-  --chart-1: 32 95% 44%;
-  --chart-2: 43 96% 56%;
-  --chart-3: 22 90% 52%;
-  --chart-4: 12 76% 46%;
-  --chart-5: 351 74% 42%;
+  /* Price tiers — cream through deep bronze */
+  --chart-1: 40 45% 85%;
+  --chart-2: 38 53% 66%;
+  --chart-3: 37 46% 59%;
+  --chart-4: 35 34% 49%;
+  --chart-5: 35 38% 36%;
 
-  /* Plain colour values used by the conveyor's color-mix() shading */
-  --color-background: #0a0a0a;
-  --color-foreground: #f5f1e8;
-  --color-muted-foreground: #a8a29a;
-  --color-card: #0f0f0f;
-  --color-border: #2f2b26;
+  /* Plain values read by the conveyor's color-mix() shading */
+  --color-background: #11110f;
+  --color-foreground: #f5f0e8;
+  --color-muted-foreground: #a9a399;
+  --color-card: #191916;
+  --color-border: #3a352c;
 
   /* ---------------------------------------------------------------
      Type
@@ -68,10 +68,10 @@
   color-scheme: dark;
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   letter-spacing: 0.01em;
-  color: #e9e4d9;
-  background: #0a0a0a;
+  color: var(--text);
+  background: var(--ink);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -87,14 +87,16 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
-    background: #0a0a0a;
-    color: #e9e4d9;
+    background: var(--ink);
+    color: var(--text);
     overflow-x: hidden;
+    font-feature-settings: "ss01", "cv11";
   }
 
   #root {
@@ -111,7 +113,7 @@
   h1, h2, h3, h4, h5, h6 {
     margin: 0;
     font-weight: inherit;
-    line-height: 1.1;
+    line-height: 1.06;
     text-wrap: balance;
   }
 
@@ -125,7 +127,10 @@
     text-decoration: none;
   }
 
-  button {
+  button,
+  input,
+  select,
+  textarea {
     font-family: inherit;
     font-size: inherit;
     color: inherit;
@@ -136,12 +141,12 @@
   }
 
   ::selection {
-    background: var(--savora-gold);
-    color: #0a0a0a;
+    background: var(--muted-gold);
+    color: var(--ink);
   }
 
   :focus-visible {
-    outline: 2px solid var(--savora-gold);
+    outline: 2px solid var(--accent-gold);
     outline-offset: 3px;
   }
 
@@ -151,17 +156,17 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: var(--ink);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #332e27;
+    background: #3a352c;
     border-radius: 999px;
-    border: 2px solid #0a0a0a;
+    border: 2px solid var(--ink);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--savora-gold-dark);
+    background: var(--muted-gold);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -177,28 +182,70 @@
 }
 
 @layer components {
-  /* Shared section rhythm so every band lines up */
   .section-shell {
-    @apply relative w-full px-4 sm:px-6 lg:px-8;
+    @apply relative mx-auto w-full max-w-7xl px-5 sm:px-7 lg:px-10;
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-amber-300/90;
+    @apply inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.34em] text-gold-light/90;
   }
 
   .gold-rule {
-    @apply h-px w-12 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent;
+    @apply h-px w-10 bg-gradient-to-r from-transparent via-gold/70 to-transparent;
+  }
+
+  .display {
+    @apply font-serif font-light leading-[1.03] tracking-[-0.01em] text-cream;
   }
 
   .btn-gold {
-    @apply relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 px-7 py-3.5 text-sm font-medium tracking-wide text-[#0a0a0a] shadow-[0_18px_40px_-18px_rgba(217,119,6,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_50px_-18px_rgba(245,158,11,0.75)] active:translate-y-0 active:scale-[0.99];
+    @apply relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-gold-light via-gold to-gold-light px-7 py-3.5 text-[13px] font-medium uppercase tracking-[0.14em] text-ink shadow-[0_18px_44px_-20px_rgba(198,164,106,0.75)] transition-all duration-500 ease-silk hover:-translate-y-0.5 hover:shadow-[0_26px_60px_-22px_rgba(217,183,122,0.85)] active:translate-y-0 active:scale-[0.99];
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2.5 rounded-full border border-amber-500/30 bg-white/[0.03] px-7 py-3.5 text-sm font-medium tracking-wide text-amber-100/90 backdrop-blur-sm transition-all duration-300 hover:border-amber-400/60 hover:bg-white/[0.07] hover:text-white;
+    @apply inline-flex items-center justify-center gap-2.5 rounded-full border border-line bg-cream/[0.02] px-7 py-3.5 text-[13px] font-medium uppercase tracking-[0.14em] text-cream/85 backdrop-blur-sm transition-all duration-500 ease-silk hover:border-gold/60 hover:bg-cream/[0.05] hover:text-cream;
   }
 
   .card-surface {
-    @apply rounded-2xl border border-white/[0.07] bg-white/[0.02] backdrop-blur-sm transition-all duration-300;
+    @apply rounded-2xl border border-line bg-coal/50 backdrop-blur-sm transition-all duration-500 ease-silk;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-line bg-ink/60 px-4 py-3.5 text-sm text-cream placeholder:text-sand/45 transition-colors duration-300 focus:border-gold/60 focus:bg-ink/90 focus:outline-none;
+  }
+
+  .field-label {
+    @apply mb-2 block text-[10px] font-medium uppercase tracking-[0.26em] text-sand/80;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-line to-transparent;
+  }
+
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent);
+    mask-image: linear-gradient(to bottom, black 55%, transparent);
+  }
+
+  .text-shadow-lux {
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.55);
   }
 }
