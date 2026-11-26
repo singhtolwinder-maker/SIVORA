@@ -8,7 +8,7 @@ import createApp from "./app.js";
  * unexplained 502 even though the last log line said "listening". Retrying
  * gives a freshly started mongod time to accept connections and prints one
  * actionable line per attempt.
- */
+ */ 
 async function connectWithRetry({ attempts = 12, delayMs = 5000 } = {}) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
