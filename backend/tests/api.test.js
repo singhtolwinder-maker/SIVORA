@@ -931,6 +931,22 @@ describe("security", () => {
     assert.equal(response.body.error.code, "ORIGIN_NOT_ALLOWED");
   });
 
+  it("scopes session cookies and sets SameSite protection", async () => {
+    const response = await api
+      .post("/api/auth/login")
+      .send({ email: "guest@savora.test", password: PASSWORD });
+    assert.equal(response.status, 200);
+
+    const cookies = response.headers["set-cookie"];
+    const access = cookies.find((entry) => entry.startsWith("savora_at="));
+    const refresh = cookies.find((entry) => entry.startsWith("savora_rt="));
+
+    assert.match(access, /HttpOnly/);
+    assert.match(access, /SameSite=Lax/);
+    assert.match(refresh, /Path=\/api\/auth/);
+    assert.match(refresh, /SameSite=Lax/);
+  });
+
   it("never leaks the password hash through the admin customer list", async () => {
     const response = await adminAgent.get("/api/admin/customers");
     assert.equal(response.status, 200);

@@ -12,7 +12,7 @@ const ACCESS_TTL_MS = () => {
 const baseCookie = () => ({
   httpOnly: true,
   secure: config.cookieSecure,
-  sameSite: "lax",
+  sameSite: config.cookieSameSite,
   ...(config.COOKIE_DOMAIN ? { domain: config.COOKIE_DOMAIN } : {}),
 });
 

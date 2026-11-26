@@ -37,6 +37,10 @@ const schema = z.object({
     .string()
     .optional()
     .transform((value) => value === "true"),
+  // "lax" is correct when the site and the API share an origin (including a
+  // host-level proxy/rewrite such as Vercel's). "none" is only needed when the
+  // API is genuinely cross-site, and requires HTTPS.
+  COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
 
   RESTAURANT_TIMEZONE: z.string().default("America/New_York"),
   TAX_RATE: z.coerce.number().min(0).max(0.5).default(0.08875),
@@ -112,12 +116,24 @@ if (isProduction && env.IP_HASH_SALT === "savora-dev-salt") {
   warnings.push("IP_HASH_SALT is the public development default; set a private salt.");
 }
 
+const cookieSecure = isProduction || env.COOKIE_SECURE;
+
+// SameSite=None is only transmitted over HTTPS. Rather than silently issuing a
+// cookie every browser rejects, degrade to lax in development and say so.
+const cookieSameSite =
+  env.COOKIE_SAMESITE === "none" && !cookieSecure ? "lax" : env.COOKIE_SAMESITE;
+
+if (env.COOKIE_SAMESITE === "none" && !cookieSecure) {
+  warnings.push("COOKIE_SAMESITE=none requires HTTPS; using lax in development.");
+}
+
 export const config = Object.freeze({
   ...env,
   isProduction,
   isTest: env.NODE_ENV === "test",
   isDevelopment: env.NODE_ENV === "development",
-  cookieSecure: isProduction || env.COOKIE_SECURE,
+  cookieSecure,
+  cookieSameSite,
   paymentsEnabled: Boolean(env.STRIPE_SECRET_KEY),
   warnings,
   accessCookieName: "savora_at",

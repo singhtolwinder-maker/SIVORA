@@ -1,6 +1,7 @@
 import config from "./config/env.js";
 import { connectDatabase, disconnectDatabase, isAuthenticationError } from "./config/db.js";
 import createApp from "./app.js";
+import MenuItem from "./models/MenuItem.js";
 
 /**
  * Wait for MongoDB before listening. A missing database used to kill the
@@ -42,6 +43,16 @@ async function main() {
       console.error("[server] start MongoDB (mongod) or point MONGODB_URI at a reachable server.");
     }
     process.exit(1);
+  }
+
+  // A freshly created Atlas database connects fine and then serves an empty
+  // menu with no administrator, which looks like a frontend failure. Say it out
+  // loud at boot instead.
+  const menuCount = await MenuItem.estimatedDocumentCount().catch(() => null);
+  if (menuCount === 0) {
+    console.warn(
+      "[server] the menu collection is empty — run `npm run seed` to create the dishes and the administrator account.",
+    );
   }
 
   const server = app.listen(config.PORT, () => {
