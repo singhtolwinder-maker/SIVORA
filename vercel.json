@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://savora-backend-4haz.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
