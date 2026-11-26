@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Menu as MenuIcon, Phone, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Menu as MenuIcon, Phone, ShoppingBag, UserRound, X } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -9,6 +9,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { useShop } from "@/lib/shop";
 
 const menuGroups = [
   { title: "Prime Cuts", copy: "Dry-aged ribeye, filet mignon, tomahawk", price: "$58 – $145" },
@@ -67,6 +68,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const active = useActiveSection();
+  const { user, itemCount, openCart, openAccount } = useShop();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -206,6 +208,27 @@ export function Navbar() {
               <Phone className="size-3.5" aria-hidden="true" />
               (212) 555-0184
             </a>
+            <button
+              type="button"
+              onClick={openCart}
+              aria-label={itemCount > 0 ? `Your order, ${itemCount} items` : "Your order"}
+              className="relative inline-flex size-11 items-center justify-center rounded-full border border-line text-cream/85 transition-colors duration-300 hover:border-gold/60 hover:text-gold-light"
+            >
+              <ShoppingBag className="size-[18px]" aria-hidden="true" />
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-gold px-1 text-[9px] font-semibold leading-[18px] text-ink">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => (user ? openAccount() : openCart())}
+              aria-label={user ? "Your account" : "Sign in"}
+              className="inline-flex size-11 items-center justify-center rounded-full border border-line text-cream/85 transition-colors duration-300 hover:border-gold/60 hover:text-gold-light"
+            >
+              <UserRound className="size-[18px]" aria-hidden="true" />
+            </button>
             <a href="#reserve" className="btn-gold hidden !px-6 !py-3 sm:inline-flex">
               Reserve
               <ArrowRight className="size-3.5" aria-hidden="true" />

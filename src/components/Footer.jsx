@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
 import { Magnetic } from "./ui/Magnetic";
+import { ContactForm } from "./ContactForm";
 
 const hours = [
   { day: "Tuesday – Thursday", time: "5:00 PM – 10:30 PM" },
@@ -186,6 +187,37 @@ export function Footer() {
               <span aria-hidden="true">→</span>
             </a>
           </div>
+        </div>
+
+        {/* Contact */}
+        <div className="mt-14 grid gap-8 rounded-2xl border border-line/70 bg-coal/40 p-6 lg:grid-cols-[0.85fr_1.15fr] lg:p-9">
+          <div>
+            <p className="eyebrow">
+              <span className="gold-rule" aria-hidden="true" />
+              Write to us
+            </p>
+            <h2 className="mt-4 font-serif text-2xl font-light leading-tight text-cream sm:text-3xl">
+              Questions, private dining,
+              <br />
+              <span className="italic text-gold-light">or just a hello.</span>
+            </h2>
+            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-sand/80">
+              Send a note and our team will reply within one business day. For same-day tables,
+              call us directly.
+            </p>
+            <div className="mt-6 space-y-2 text-[13px] text-cream/80">
+              <a href="tel:+12125550184" className="flex items-center gap-2.5 transition-colors hover:text-gold-light">
+                <Phone className="size-3.5 text-gold/70" aria-hidden="true" />
+                (212) 555-0184
+              </a>
+              <a href="mailto:hello@savora.com" className="flex items-center gap-2.5 transition-colors hover:text-gold-light">
+                <Mail className="size-3.5 text-gold/70" aria-hidden="true" />
+                hello@savora.com
+              </a>
+            </div>
+          </div>
+
+          <ContactForm />
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-line/60 pt-6 text-[10px] text-sand/45 sm:flex-row">

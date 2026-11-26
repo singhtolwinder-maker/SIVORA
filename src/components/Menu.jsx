@@ -2,14 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, Plus, X } from "lucide-react";
 import { SushiConveyorMenu } from "@/components/ui/sushi-conveyor-menu";
+import { api } from "@/lib/api";
+import { useShop } from "@/lib/shop";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const EASE = [0.16, 1, 0.3, 1];
 
-const categories = ["All", "Prime Cuts", "Signatures", "Starters", "Desserts"];
-
-const dishes = [
+/** The house menu. Rendered instantly, then replaced by the live API menu. */
+const fallbackDishes = [
   {
     id: "tomahawk",
     name: "Dry-Aged Tomahawk",
@@ -156,7 +157,27 @@ const dishes = [
   },
 ];
 
-const featured = dishes[0];
+function priceLabel(cents) {
+  const value = Number(cents) / 100;
+  return `$${Number.isInteger(value) ? value : value.toFixed(2)}`;
+}
+
+/** Maps an API dish to the shape the conveyor and grid already render. */
+function mapApiDish(item) {
+  return {
+    // Ordering needs the database id; the slug is kept for deep links.
+    id: item.id || item._id,
+    slug: item.slug,
+    name: item.name,
+    category: item.category,
+    price: priceLabel(item.priceCents),
+    description: item.description,
+    details: item.details?.length ? item.details : item.ingredients || [],
+    image: item.imageUrl,
+    tier: item.tier ?? 3,
+    tag: item.isFeatured ? "Chef's cut" : undefined,
+  };
+}
 
 function useLockBody(locked) {
   useEffect(() => {
@@ -169,7 +190,7 @@ function useLockBody(locked) {
   }, [locked]);
 }
 
-function DishDialog({ dish, onClose }) {
+function DishDialog({ dish, onClose, onAdd }) {
   const closeRef = useRef(null);
   useLockBody(Boolean(dish));
 
@@ -244,7 +265,18 @@ function DishDialog({ dish, onClose }) {
                 </ul>
 
                 <div className="mt-8 flex flex-col gap-2.5">
-                  <a href="#reserve" onClick={onClose} className="btn-gold w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAdd(dish);
+                      onClose();
+                    }}
+                    className="btn-gold w-full"
+                  >
+                    Add to order
+                    <Plus className="size-4" aria-hidden="true" />
+                  </button>
+                  <a href="#reserve" onClick={onClose} className="btn-ghost w-full">
                     Reserve a Table
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </a>
@@ -261,7 +293,7 @@ function DishDialog({ dish, onClose }) {
   );
 }
 
-function DishCard({ dish, index, onOpen }) {
+function DishCard({ dish, index, onOpen, onAdd }) {
   return (
     <motion.article
       layout
@@ -318,6 +350,21 @@ function DishCard({ dish, index, onOpen }) {
           </div>
         </div>
       </button>
+
+      <div className="flex items-center justify-between gap-3 border-t border-line/60 bg-coal px-4 py-2.5">
+        <span className="text-[9px] uppercase tracking-[0.22em] text-sand/45">
+          Tap the plate for details
+        </span>
+        <button
+          type="button"
+          onClick={() => onAdd(dish)}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold/40 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.18em] text-gold-light transition-colors duration-300 hover:bg-gold/10 hover:text-cream"
+          aria-label={`Add ${dish.name} to your order`}
+        >
+          <Plus className="size-3" aria-hidden="true" />
+          Add
+        </button>
+      </div>
     </motion.article>
   );
 }
@@ -326,11 +373,51 @@ export function Menu() {
   const [category, setCategory] = useState("All");
   const [openDish, setOpenDish] = useState(null);
   const [toast, setToast] = useState("");
+  const [dishes, setDishes] = useState(fallbackDishes);
+  const [menuState, setMenuState] = useState("loading");
   const reduce = useReducedMotion();
+  const { addItem } = useShop();
+
+  // The live menu comes from MongoDB; the house menu above keeps the section
+  // usable if the API is unreachable.
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .getMenu({ limit: 100, signal: controller.signal })
+      .then((payload) => {
+        const mapped = (payload?.data ?? []).map(mapApiDish).filter((dish) => dish.name && dish.image);
+        if (mapped.length === 0) {
+          setMenuState("fallback");
+          return;
+        }
+        setDishes(mapped);
+        setMenuState("live");
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") setMenuState("fallback");
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const allCategories = useMemo(() => {
+    const found = [...new Set(dishes.map((dish) => dish.category))];
+    const preferred = ["Prime Cuts", "Signatures", "Starters", "Desserts", "Sides", "Drinks"];
+    return [
+      "All",
+      ...preferred.filter((name) => found.includes(name)),
+      ...found.filter((name) => !preferred.includes(name)),
+    ];
+  }, [dishes]);
+
+  const featuredDish =
+    dishes.find((dish) => dish.slug === "dry-aged-tomahawk" || dish.slug === "tomahawk") ??
+    dishes[0] ??
+    fallbackDishes[0];
 
   const filtered = useMemo(
     () => (category === "All" ? dishes : dishes.filter((dish) => dish.category === category)),
-    [category],
+    [category, dishes],
   );
 
   useEffect(() => {
@@ -340,6 +427,21 @@ export function Menu() {
   }, [toast]);
 
   const closeDish = () => setOpenDish(null);
+
+  // The house fallback menu is not in the database, so only live dishes can be
+  // ordered. The API expects the Mongo id, never the slug.
+  const handleAdd = async (dish) => {
+    if (!/^[a-f\d]{24}$/i.test(String(dish?.id ?? ""))) {
+      setToast("Online ordering is unavailable for this dish right now.");
+      return;
+    }
+    try {
+      const result = await addItem(dish.id, 1);
+      if (result?.needsAuth) setToast("Sign in to start your order.");
+    } catch (error) {
+      setToast(error?.message || "Could not add that dish to your order.");
+    }
+  };
 
   return (
     <section
@@ -385,7 +487,7 @@ export function Menu() {
                 next: "Next dish",
                 pause: "Pause the belt",
               }}
-              onAdd={(item) => setToast(`${item.name} — noted for your table request`)}
+              onAdd={handleAdd}
               className="mx-auto max-w-4xl bg-transparent"
             />
           </div>
@@ -411,7 +513,7 @@ export function Menu() {
           <div className="grid overflow-hidden rounded-2xl border border-line bg-coal/40 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="relative min-h-[18rem] overflow-hidden lg:min-h-[26rem]">
               <img
-                src={featured.image}
+                src={featuredDish.image}
                 alt="Tomahawk ribeye sliced to reveal a medium-rare centre"
                 loading="lazy"
                 decoding="async"
@@ -448,14 +550,14 @@ export function Menu() {
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-5">
-                <span className="font-serif text-4xl text-cream">$145</span>
+                <span className="font-serif text-4xl text-cream">{featuredDish.price}</span>
                 <a href="#reserve" className="btn-gold">
                   Reserve for Two
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </a>
                 <button
                   type="button"
-                  onClick={() => setOpenDish(featured)}
+                  onClick={() => setOpenDish(featuredDish)}
                   className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.24em] text-cream/60 transition-colors hover:text-gold-light"
                 >
                   Details
@@ -474,11 +576,18 @@ export function Menu() {
               {filtered.length} {filtered.length === 1 ? "plate" : "plates"}
               {category !== "All" ? ` · ${category}` : ""}
             </p>
+            {menuState !== "live" && (
+              <p className="mt-1 text-[9px] uppercase tracking-[0.26em] text-sand/40">
+                {menuState === "loading"
+                  ? "Syncing tonight's menu…"
+                  : "House menu · live menu unavailable"}
+              </p>
+            )}
           </Reveal>
 
           <Reveal delay={0.1}>
             <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Filter the menu">
-              {categories.map((item) => {
+              {allCategories.map((item) => {
                 const selected = item === category;
                 return (
                   <button
@@ -511,7 +620,7 @@ export function Menu() {
         <motion.div layout className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {filtered.map((dish, i) => (
-              <DishCard key={dish.id} dish={dish} index={i} onOpen={setOpenDish} />
+              <DishCard key={dish.id} dish={dish} index={i} onOpen={setOpenDish} onAdd={handleAdd} />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -533,7 +642,7 @@ export function Menu() {
         </Reveal>
       </div>
 
-      <DishDialog dish={openDish} onClose={closeDish} />
+      <DishDialog dish={openDish} onClose={closeDish} onAdd={handleAdd} />
     </section>
   );
 }

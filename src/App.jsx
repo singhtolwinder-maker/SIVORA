@@ -12,6 +12,10 @@ import { Footer } from "./components/Footer";
 import { Preloader } from "./components/ui/Preloader";
 import { BackToTop, ScrollProgress } from "./components/ui/ScrollProgress";
 import { Marquee } from "./components/ui/Marquee";
+import { CartDrawer } from "./components/shop/CartDrawer";
+import { AccountPanel } from "./components/shop/AccountPanel";
+import AdminApp from "./admin/AdminApp";
+import { ShopProvider, useShop } from "./lib/shop";
 
 const marqueeItems = [
   "Dry-aged 28 days",
@@ -22,7 +26,29 @@ const marqueeItems = [
   "Dinner from 5 PM",
 ];
 
-function App() {
+/** Confirmation for cart actions, with a shortcut into the order drawer. */
+function ShopToast() {
+  const { toast, openCart } = useShop();
+  if (!toast) return null;
+
+  return (
+    <div
+      role="status"
+      className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-3 rounded-full border border-line bg-coal/95 px-4 py-2.5 text-[12px] text-cream shadow-[0_30px_80px_-40px_rgba(0,0,0,1)] backdrop-blur-xl"
+    >
+      <span>{toast}</span>
+      <button
+        type="button"
+        onClick={openCart}
+        className="text-[10px] uppercase tracking-[0.18em] text-gold-light transition-colors hover:text-cream"
+      >
+        View order
+      </button>
+    </div>
+  );
+}
+
+function Storefront() {
   // Deep links mount after the browser's first scroll attempt, so re-apply once
   // fonts and images have settled the layout.
   useEffect(() => {
@@ -60,7 +86,24 @@ function App() {
 
       <Footer />
       <BackToTop />
+      <CartDrawer />
+      <AccountPanel />
+      <ShopToast />
     </div>
+  );
+}
+
+function App() {
+  // The house dashboard is a second entry point on the same bundle, so it keeps
+  // working with the Vite dev server and a static SPA fallback.
+  if (window.location.pathname.replace(/\/+$/, "") === "/admin") {
+    return <AdminApp />;
+  }
+
+  return (
+    <ShopProvider>
+      <Storefront />
+    </ShopProvider>
   );
 }
 

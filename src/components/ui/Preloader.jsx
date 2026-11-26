@@ -47,6 +47,10 @@ export function Preloader() {
           key="preloader"
           aria-hidden="true"
           exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } }}
+          // Decorative only: never intercept clicks, even if the exit animation
+          // is paused (background tabs throttle rAF, which used to leave this
+          // curtain covering the page and swallowing every interaction).
+          style={{ pointerEvents: "none" }}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-ink"
         >
           <div className="grain pointer-events-none absolute inset-0 opacity-[0.035]" />

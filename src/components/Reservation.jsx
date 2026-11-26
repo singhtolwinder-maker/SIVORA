@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, CalendarCheck, Check, Clock, MapPin, Phone, Users } from "lucide-react";
+import { api } from "../lib/api";
 import { Reveal } from "./ui/Reveal";
 
 const times = ["5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM", "8:00 PM", "8:30 PM", "9:00 PM", "9:30 PM"];
@@ -8,6 +9,19 @@ const partySizes = ["1 guest", "2 guests", "3 guests", "4 guests", "5 guests", "
 const occasions = ["No occasion", "Birthday", "Anniversary", "Business dinner", "Celebration"];
 
 const today = new Date().toISOString().slice(0, 10);
+
+/** "7:00 PM" -> "19:00", the 24h format the API expects. */
+function to24Hour(label) {
+  const [clock, meridiem] = label.split(" ");
+  const [hour, minute] = clock.split(":").map(Number);
+  const hours = meridiem === "PM" ? (hour % 12) + 12 : hour % 12;
+  return `${String(hours).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** "4 guests" -> 4; "7+ guests" -> 7 (the team calls for larger parties). */
+function toPartySize(label) {
+  return Number.parseInt(label, 10) || 1;
+}
 
 const emptyForm = {
   name: "",
@@ -46,6 +60,8 @@ export function Reservation() {
   const [values, setValues] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const formRef = useRef(null);
 
   const update = (field) => (event) => {
@@ -58,10 +74,11 @@ export function Reservation() {
     });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const found = validate(values);
     setErrors(found);
+    setFormError("");
 
     if (Object.keys(found).length > 0) {
       const first = fieldOrder.find((field) => found[field]);
@@ -69,12 +86,45 @@ export function Reservation() {
       return;
     }
 
-    setSubmitted({ ...values });
+    setSubmitting(true);
+    try {
+      const response = await api.createReservation({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: values.phone.trim(),
+        date: values.date,
+        time: to24Hour(values.time),
+        partySize: toPartySize(values.guests),
+        occasion: values.occasion === "No occasion" ? "" : values.occasion,
+        notes: values.notes.trim(),
+      });
+
+      setSubmitted({ ...values, code: response?.data?.reservationCode ?? "" });
+    } catch (error) {
+      // Field-level validation comes back as `details`; anything else is shown
+      // as a single message above the button.
+      const details = Array.isArray(error?.details) ? error.details : [];
+      const mapped = details.reduce((accumulator, detail) => {
+        if (detail?.field && !accumulator[detail.field]) accumulator[detail.field] = detail.message;
+        return accumulator;
+      }, {});
+
+      if (Object.keys(mapped).length > 0) {
+        setErrors(mapped);
+        const first = fieldOrder.find((field) => mapped[field]);
+        if (first) formRef.current?.querySelector(`[name="${first}"]`)?.focus();
+      } else {
+        setFormError(error?.message || "We could not reach the reservation desk. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const reset = () => {
     setValues(emptyForm);
     setErrors({});
+    setFormError("");
     setSubmitted(null);
   };
 
@@ -199,8 +249,17 @@ export function Reservation() {
                   </dl>
 
                   <p className="mt-5 text-[11px] text-sand/60">
-                    A confirmation copy has been sent to {submitted.email}.
+                    We&rsquo;ll confirm by email at {submitted.email} within the hour.
                   </p>
+
+                  {submitted.code && (
+                    <p className="mt-3 text-[10px] uppercase tracking-[0.24em] text-gold/80">
+                      Reference{" "}
+                      <span className="ml-1 font-mono text-xs normal-case tracking-normal text-cream/90">
+                        {submitted.code}
+                      </span>
+                    </p>
+                  )}
 
                   <button type="button" onClick={reset} className="btn-ghost mt-7">
                     Make another reservation
@@ -418,8 +477,22 @@ export function Reservation() {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn-gold w-full">
-                    Request Reservation
+                  {formError && (
+                    <p
+                      role="alert"
+                      className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] leading-relaxed text-destructive"
+                    >
+                      {formError}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-gold w-full disabled:pointer-events-none disabled:opacity-60"
+                    disabled={submitting}
+                    aria-busy={submitting}
+                  >
+                    {submitting ? "Requesting…" : "Request Reservation"}
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </button>
 
