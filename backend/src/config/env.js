@@ -22,7 +22,10 @@ const schema = z.object({
         .split(",")
         .map((origin) => origin.trim())
         .filter(Boolean),
-    ),
+    )
+    .refine((origins) => !origins.includes("*"), {
+      message: "wildcard origins are not allowed; use explicit origin URLs",
+    }),
 
   JWT_ACCESS_SECRET: z.string().optional(),
   JWT_REFRESH_SECRET: z.string().optional(),

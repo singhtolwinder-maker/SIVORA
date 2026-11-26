@@ -1,5 +1,5 @@
 import config from "./config/env.js";
-import { connectDatabase, disconnectDatabase } from "./config/db.js";
+import { connectDatabase, disconnectDatabase, isAuthenticationError } from "./config/db.js";
 import createApp from "./app.js";
 
 /**
@@ -14,6 +14,7 @@ async function connectWithRetry({ attempts = 12, delayMs = 5000 } = {}) {
     try {
       return await connectDatabase();
     } catch (error) {
+      if (isAuthenticationError(error)) throw error;
       if (attempt === attempts) throw error;
       console.warn(
         `[server] MongoDB unavailable (attempt ${attempt}/${attempts}): ${error.message}. ` +
@@ -33,7 +34,13 @@ async function main() {
     await connectWithRetry();
   } catch (error) {
     console.error(`[server] cannot start without a database connection: ${error.message}`);
-    console.error("[server] start MongoDB (mongod) or point MONGODB_URI at a reachable server.");
+    if (isAuthenticationError(error)) {
+      console.error(
+        "[server] check the Atlas database username and password in MONGODB_URI; URL-encode password special characters.",
+      );
+    } else {
+      console.error("[server] start MongoDB (mongod) or point MONGODB_URI at a reachable server.");
+    }
     process.exit(1);
   }
 

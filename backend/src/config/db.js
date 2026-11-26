@@ -19,7 +19,18 @@ export function configureMongoose() {
 
 configureMongoose();
 
+mongoose.connection.on("disconnected", () => console.warn("[db] disconnected"));
+mongoose.connection.on("reconnected", () => console.info("[db] reconnected"));
+
 let connectionPromise = null;
+
+export function isAuthenticationError(error) {
+  return (
+    error?.code === 18 ||
+    error?.codeName === "AuthenticationFailed" ||
+    /bad auth|authentication failed/i.test(error?.message ?? "")
+  );
+}
 
 /**
  * Connect once and reuse the connection. Safe to call from server.js and from
@@ -46,9 +57,6 @@ export function connectDatabase(uri = config.MONGODB_URI) {
       console.error(`[db] connection failed: ${error.message}`);
       throw error;
     });
-
-  mongoose.connection.on("disconnected", () => console.warn("[db] disconnected"));
-  mongoose.connection.on("reconnected", () => console.info("[db] reconnected"));
 
   return connectionPromise;
 }
