@@ -34,7 +34,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run API test suite
-        run: npm test
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.log
+      - name: Publish failure details
+        # The job log needs repository access to read. Check annotations are
+        # public, so the reason for a failure stays visible on the pull request
+        # and to anyone triaging from outside the repository.
+        if: failure()
+        shell: bash
+        run: |
+          if [ ! -f test-output.log ]; then
+            echo "::error::Test step failed before producing output."
+            exit 1
+          fi
+          tail -n 40 test-output.log | tr -d '\r' | while IFS= read -r line; do
+            echo "::error::${line//%/%25}"
+          done
+          exit 1
 
   frontend:
     name: Frontend build
