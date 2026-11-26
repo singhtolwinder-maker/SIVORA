@@ -261,8 +261,9 @@ output as public check annotations so a red build is diagnosable without log acc
 Work sits on `main`. The hardening phases were committed as they were completed
 (`96b9a7d` cookie `SameSite` + empty-menu warning, `b1583b9` documentation), then pushed
 with the production fixes (`7efd7a9` SPA fallback + CI, `ffc9a32`/`33a48b8` CI
-diagnostics, `a811841` test command). Vercel built `a811841` automatically. No subsystem
-was rewritten, and every API contract the frontend uses is unchanged.
+diagnostics, `a811841` test command, `d201b29` documentation, `61e4057` menu copy). Every
+push built automatically on Vercel; `61e4057` is the deployment verified in production. No
+subsystem was rewritten, and every API contract the frontend uses is unchanged.
 
 | Change set | Scope |
 | --- | --- |
