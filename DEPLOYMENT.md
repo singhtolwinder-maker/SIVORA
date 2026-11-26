@@ -158,6 +158,12 @@ server {
 The API already sends Helmet's headers, writes `trust proxy = 1` in production,
 and refuses state-changing requests whose `Origin` is not in `CLIENT_ORIGINS`.
 
+For the Vercel frontend and Render API deployment, `vercel.json` proxies `/api/*`
+to the Render service so browser requests and auth cookies stay on the frontend
+origin. Set the Render API's `CLIENT_ORIGINS` to
+`https://savora-restaurant-five.vercel.app`, then redeploy the frontend so the
+rewrite takes effect.
+
 ---
 
 ## 5. First production deploy
