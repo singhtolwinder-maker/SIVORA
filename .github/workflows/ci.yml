@@ -20,9 +20,8 @@ jobs:
       run:
         working-directory: backend
     env:
-      # Ubuntu 24.04 runners no longer ship libcrypto.so.1.1, which the
-      # mongodb-memory-server default binary needs. 8.0 has native Ubuntu
-      # builds, so the in-memory server starts on the runner as it does locally.
+      # Pin the in-memory MongoDB binary: 8.0 has current Ubuntu builds, so the
+      # suite runs against the same server version locally and on the runner.
       MONGOMS_VERSION: 8.0.5
     steps:
       - uses: actions/checkout@v4

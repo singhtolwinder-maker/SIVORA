@@ -13,7 +13,7 @@
     "start": "node src/server.js",
     "seed": "node src/scripts/seed.js",
     "admin:reset": "node src/scripts/reset-admin.js",
-    "test": "node --import ./tests/env.js --test --test-concurrency=1 tests/",
+    "test": "node --import ./tests/env.js --test --test-concurrency=1",
     "check": "node --check src/server.js"
   },
   "dependencies": {
