@@ -164,7 +164,13 @@ and refuses state-changing requests whose `Origin` is not in `CLIENT_ORIGINS`.
 
 For the Vercel frontend and Render API deployment, `vercel.json` proxies `/api/*`
 to the Render service so browser requests and auth cookies stay on the frontend
-origin.
+origin, and falls back to `index.html` for every other path so client-side routes
+(`/admin` above all) resolve on a direct load or refresh.
+
+* The SPA fallback must come **after** the `/api` rule in the `rewrites` array;
+  rewrites are applied in order. Without it Vercel answers `/admin` with its own
+  `404 NOT_FOUND` and the bundle is never requested — the dashboard itself is fine.
+  Existing files such as `/assets/*` are served before rewrites are applied.
 
 * `vercel.json` contains the Render hostname in its `destination`. It is the one
   place an infrastructure URL appears in this repo and `vercel.json` cannot read
@@ -255,3 +261,24 @@ are no local file uploads (dish images are static assets referenced by URL).
   step if the warning matters for the client's performance budget.
 * `GET /api/auth/session` was added so anonymous page loads do not log a 401 in
   the browser console; `/api/auth/me` still returns 401 for guests by design.
+
+---
+
+## 8. Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and on every pull request:
+
+| Job | Command | Notes |
+| --- | --- | --- |
+| Backend tests | `cd backend && npm test` | Node 22, `MONGOMS_VERSION=8.0.5` pinned |
+| Frontend build | `npm ci && npm run build` | the production build Vercel will run |
+
+Vercel deploys `main` on push. The workflow does not deploy anything itself; it
+reports the same gates on the commit, so a red run means the deployment should be
+treated as suspect. A failing test job republishes the tail of its output as check
+annotations, which are readable without repository log access.
+
+The test command relies on the Node test runner's own discovery
+(`node --test`), not a directory argument: `node --test tests/` is treated as a
+module specifier on Node 22 and fails with `ERR_UNSUPPORTED_DIR_IMPORT` before any
+test runs.

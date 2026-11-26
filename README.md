@@ -130,6 +130,18 @@ Every endpoint, its payload, status codes and error codes are documented in
   rejected in `middleware/sanitize.js`, and every body is whitelisted by Zod.
 * Rate limits on the global API, auth endpoints and public forms.
 
+## Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the API suite and the production
+build on every push to `main` and every pull request. Vercel deploys `main`
+automatically, so the workflow result tells you whether a deployment is trustworthy.
+
+```bash
+cd backend && npm test    # 56 tests, in-memory MongoDB
+npm run build             # production bundle
+npm run lint              # fails on the TypeScript files, see Known gaps
+```
+
 ## Known gaps
 
 * **Payments** — no Stripe keys; endpoints answer `503 PAYMENTS_DISABLED` by design.

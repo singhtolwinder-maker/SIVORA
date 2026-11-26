@@ -148,6 +148,7 @@ Full contract: [`docs/API.md`](docs/API.md).
 | **H-4** | HIGH | `vite.config.js` | `http://127.0.0.1:5173` refused connections | Vite's default `host: localhost` resolved to `::1` on Windows | `host: "127.0.0.1"`, `strictPort`, proxy error logging | 200 on IPv4 literal | FIXED AND VERIFIED |
 | **H-5** | HIGH | `backend/src/server.js` | Browser saw 502 and the API was down | API connected to Mongo before listening and called `process.exit(1)` | `connectWithRetry()` — 12 attempts, 5 s apart, actionable log per attempt | Restart with Mongo stopped → retries, then serves when Mongo returns | FIXED AND VERIFIED |
 | **H-6** | HIGH | `src/` | No cart, checkout, account or dashboard existed | Features were backend-only; nothing called them | Added `shop.jsx`, `format.js`, `CartDrawer`, `AccountPanel`, `AdminApp`; wired Menu/Navbar/App | 45/45 E2E; browser journey | FIXED AND VERIFIED |
+| **H-7** | HIGH (production) | `vercel.json` | `https://savora-restaurant-five.vercel.app/admin` returned `404 NOT_FOUND` although the dashboard existed in the bundle | `vercel.json` proxied `/api/*` but had no SPA fallback, so Vercel looked for a file named `admin` and served its own 404 before the React bundle ran | Added a catch-all rewrite to `/index.html` after the `/api` rule | Production `/admin` and `/admin/` return `200`, the bundle boots and the sign-in screen renders; admin login `200`, stats `200` | FIXED AND VERIFIED IN PRODUCTION |
 | **P-1** | CRITICAL (production) | Atlas `savora` | Deployed site served 0 dishes and no login worked | The Atlas database had never been seeded; an empty cluster connects successfully, so nothing failed loudly | Ran `npm run seed` (additive: 13 dishes + admin); server now warns at boot when the menu is empty | Live: 13 items / 4 categories; admin login 200; stats 200 | FIXED AND VERIFIED |
 | **P-2** | HIGH | `backend/src/utils/cookies.js`, `config/env.js` | A cross-site deployment could not authenticate at all | `sameSite: "lax"` was hardcoded with no opt-in to `none` | Validated `COOKIE_SAMESITE` (`lax\|strict\|none`), forced `Secure` for `none`, warning without HTTPS; regression test | Cookie attributes asserted in tests | FIXED AND VERIFIED |
 | **P-3** | MEDIUM | `backend/src/server.js` | Empty database produced no diagnostic | Nothing checked the menu collection at startup | Boot warning naming `npm run seed` | Log observed | FIXED AND VERIFIED |
@@ -217,13 +218,50 @@ frozen rather than broken — the preloader overlay (H-3). Neither was a CORS pr
 loaded the production Mongoose configuration (H-2). Both are fixed, and the test bootstrap
 now runs the same configuration as the server.
 
+### 4.4 The production 404 at `/admin`
+
+**Symptom.** `https://savora-restaurant-five.vercel.app/admin` returned Vercel's own
+`404 NOT_FOUND`, while `/` returned `200` and `/api/health` returned `200`.
+
+**Traced cause.** The dashboard was not missing. `src/App.jsx` selects `AdminApp` when
+`window.location.pathname` is `/admin`, and the dashboard ships in the same bundle that
+`/` loads (verified by the identical asset hash, `assets/index-C3uaxY9C.js`). The failure
+was server-side, before React ran: `vercel.json` contained one rewrite, `/api/:path*` →
+Render, and nothing else. Vercel's static output therefore looked for a file called
+`admin`, found none, and answered with its 404 — the bundle was never requested.
+
+**Why the earlier pass missed it.** The admin dashboard had been verified on the Vite dev
+server, which already falls back to `index.html`; a dev success cannot prove a static
+host will do the same. That is exactly the local-versus-production distinction this report
+labels.
+
+**Repair.** A catch-all rewrite to `/index.html` is now the second rule in `vercel.json`,
+after the `/api` rule so the API proxy keeps priority. Hashed assets are unaffected:
+Vercel serves existing files before applying rewrites, confirmed by `/assets/index-C3uaxY9C.js`
+returning `200 application/javascript`.
+
+**Verified in production after deploy.** `/admin` → `200`, `/admin/` → `200`, the shell
+includes the built bundle, the dashboard renders its sign-in screen in a real browser, a
+foreign `POST /api/auth/login` still returns `403`, and a signed-out `GET /api/admin/stats`
+still returns `401` — the route was fixed without weakening the authentication in front of it.
+
+### 4.5 The CI failure that only existed on the runner
+
+`node --test --test-concurrency=1 tests/` passes on Node 26 on this machine, but on the
+Node 22 runner the directory is treated as a module specifier and the process exits with
+`ERR_UNSUPPORTED_DIR_IMPORT` in under a second, before any test runs. It is environment
+dependent, so it could not be reproduced locally. The command now lets the test runner
+discover `tests/*.test.js` itself, which works on both, and the job republishes failing
+output as public check annotations so a red build is diagnosable without log access.
+
 ---
 
 ## 5. Repair implementation
 
-Work sits on the `audit/production-hardening` branch. The earlier phases were committed
-as they were completed; the final documentation pass added two more commits
-(`96b9a7d` cookie SameSite + empty-menu warning, `d4bf094` documentation). No subsystem
+Work sits on `main`. The hardening phases were committed as they were completed
+(`96b9a7d` cookie `SameSite` + empty-menu warning, `b1583b9` documentation), then pushed
+with the production fixes (`7efd7a9` SPA fallback + CI, `ffc9a32`/`33a48b8` CI
+diagnostics, `a811841` test command). Vercel built `a811841` automatically. No subsystem
 was rewritten, and every API contract the frontend uses is unchanged.
 
 | Change set | Scope |
@@ -349,7 +387,7 @@ requires adding `typescript-eslint`.
 
 | Item | Status |
 | --- | --- |
-| Frontend build and SPA fallback | VERIFIED (build) / documented for hosts |
+| Frontend build and SPA fallback | VERIFIED IN PRODUCTION — `/admin` and `/admin/` return the app shell `200` and render the dashboard |
 | `/api` same-origin rewrite (Vercel) | VERIFIED IN PRODUCTION |
 | API health endpoint with DB state | VERIFIED IN PRODUCTION (`200`, `database: connected`) |
 | Exact `CLIENT_ORIGINS` allowlist | VERIFIED IN PRODUCTION (preflight 204, foreign origin 403) |
@@ -395,8 +433,9 @@ structural, measured facts:
 8. **`IP_HASH_SALT`** — the private salt must be set in production (a warning is emitted).
 9. **`requestId` propagation** — generated and returned, but not sent onward to an
    external error tracker (none configured).
-10. **No CI pipeline** — tests, build and lint are run locally; a GitHub Actions workflow
-    is recommended before the next contributor joins.
+10. **CI covers tests and build, not lint** — `.github/workflows/ci.yml` runs the API suite
+    and the production build on every push and pull request. `npm run lint` cannot become a
+    gate until the TypeScript parser gap above is closed.
 
 ---
 
@@ -417,6 +456,8 @@ structural, measured facts:
 | 11 | Email provider configured | **OPEN — owner decision** |
 | 12 | Payment provider configured and tested | **OPEN — owner decision** |
 | 13 | Atlas backups enabled and a restore tested | **OPEN — owner action** |
+| 14 | Production `/admin` deep link serves the dashboard | **FIXED AND VERIFIED IN PRODUCTION** — `404` before, `200` plus rendered sign-in screen after |
+| 15 | Push-to-deploy pipeline is green | **VERIFIED** — GitHub Actions `CI` run on `a811841`: backend tests and frontend build both pass |
 
 ---
 
@@ -436,8 +477,9 @@ preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a forei
 
 ## Not verified, and why
 
-* **Deployed `/admin` sign-in in a browser** — would require typing the production
-  password into an automation session. The API login was verified directly instead.
+* **Typing the production password into a browser session** — the admin API login was
+  verified directly (200, `role: admin`, stats 200) and the deployed `/admin` route was
+  rendered in a real browser, but the credentials were not typed into a page.
 * **Production password reset email** — no mail provider, so delivery cannot be observed.
 * **Stripe charge and webhook** — no keys, and the webhook route is not mounted.
 * **Atlas network access list, backups, restore drill** — require the owner's Atlas account.
@@ -475,7 +517,9 @@ preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a forei
 | `src/components/ui/Preloader.jsx` | click-through fix (H-3) |
 | `src/lib/api.js` | session probe and shop/admin methods |
 | `vite.config.js` | IPv4 bind, `strictPort`, proxy error logging (H-4) |
-| `vercel.json` | `/api` rewrite kept; documented (P-4) |
+| `vercel.json` | SPA fallback rewrite added after the `/api` rule (H-7); API rewrite kept and documented (P-4) |
+| `.github/workflows/ci.yml` | new; GitHub Actions gate running the API suite and the production build |
+| `backend/package.json` | test command fixed for Node 22 (`node --test tests/` failed as a directory import); `MONGOMS_VERSION` pinned in CI |
 | `README.md` | replaced Vite boilerplate with real project documentation |
 | `DEPLOYMENT.md` | topology, env table, nginx, seeding, admin reset, cookie rationale, troubleshooting |
 | `docs/API.md` | new; complete endpoint reference |
@@ -504,8 +548,8 @@ preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a forei
 6. **`vercel.json`.** If the Render service URL changes, update the rewrite destination and
    redeploy the frontend, and add the new exact origin to `CLIENT_ORIGINS`.
 7. **Reviews / profile UI.** Decide whether to build them; both are listed as not implemented.
-8. **CI.** Add a workflow running `npm test`, `npm run build` and `npm run lint` before
-   merging to `main`.
+8. **Lint in CI.** The workflow runs the tests and the build. Adding `typescript-eslint`
+   would let `npm run lint` become a gate too.
 
 ---
 
