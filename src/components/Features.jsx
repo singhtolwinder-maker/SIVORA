@@ -75,7 +75,6 @@ export function Features() {
             </div>
           </div>
 
-          <div className="pointer-events-none absolute -bottom-4 -right-4 hidden size-32 rounded-xl border border-gold/25 lg:block" aria-hidden="true" />
           <div className="pointer-events-none absolute -left-4 -top-4 hidden h-24 w-24 border-l border-t border-gold/40 lg:block" aria-hidden="true" />
         </Reveal>
 

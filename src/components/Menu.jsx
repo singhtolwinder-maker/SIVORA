@@ -301,7 +301,7 @@ function DishCard({ dish, index, onOpen, onAdd }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12, transition: { duration: 0.25 } }}
       transition={{ duration: 0.6, delay: Math.min(index * 0.05, 0.3), ease: EASE }}
-      className="group relative"
+      className="group relative overflow-hidden rounded-xl border border-line/80 bg-coal"
     >
       <button
         type="button"
@@ -309,7 +309,7 @@ function DishCard({ dish, index, onOpen, onAdd }) {
         className="block w-full cursor-pointer text-left"
         aria-label={`${dish.name}, ${dish.price}. View details.`}
       >
-        <div className="relative overflow-hidden rounded-xl border border-line/80 bg-coal">
+        <div className="relative overflow-hidden">
           <img
             src={dish.image}
             alt={dish.name}
@@ -343,18 +343,20 @@ function DishCard({ dish, index, onOpen, onAdd }) {
             <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-sand/80">
               {dish.description}
             </p>
-            <span className="mt-3 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.26em] text-cream/55 transition-colors duration-300 group-hover:text-gold-light">
-              <Plus className="size-3" aria-hidden="true" />
-              Details
-            </span>
           </div>
         </div>
       </button>
 
-      <div className="flex items-center justify-between gap-3 border-t border-line/60 bg-coal px-4 py-2.5">
-        <span className="text-[9px] uppercase tracking-[0.22em] text-sand/45">
-          Tap the plate for details
-        </span>
+      <div className="flex items-center justify-between gap-3 border-t border-line/60 px-4 py-2.5">
+        <button
+          type="button"
+          onClick={() => onOpen(dish)}
+          className="inline-flex shrink-0 items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-sand/55 transition-colors duration-300 hover:text-gold-light"
+          aria-label={`View details for ${dish.name}`}
+        >
+          View details
+          <ArrowRight className="size-3" aria-hidden="true" />
+        </button>
         <button
           type="button"
           onClick={() => onAdd(dish)}
