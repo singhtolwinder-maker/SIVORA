@@ -465,7 +465,7 @@ export function Menu() {
               <span className="italic text-gold-light">served with intent.</span>
             </>
           }
-          copy="Twelve plates, one grill, nothing frozen. Pick a plate from the belt or browse the full card below."
+          copy="One grill, nothing frozen. Pick a plate from the belt or browse the full card below."
         />
 
         {/* Conveyor — original animation, retinted */}
