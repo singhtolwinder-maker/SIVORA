@@ -8,9 +8,12 @@ This project is two deployable pieces that share one origin in production:
 | REST API | Node 20+, Express 5, Mongoose 8 | `my-site/backend` | 4000 |
 | Database | MongoDB | `savora` | 27017 |
 
-Keeping `/api` on the same origin as the site is required: sessions are httpOnly
-cookies (`savora_at` at `/`, `savora_rt` at `/api/auth`) and cross-site cookies
-would need `SameSite=None; Secure` plus a third-party-cookie exemption.
+Sessions are httpOnly cookies (`savora_at` at `/`, `savora_rt` at `/api/auth`),
+so the simplest and most reliable topology is one origin: serve the site and
+proxy `/api` to Express (nginx, or the `vercel.json` rewrite in §4). If the API
+must live on a different site, set `COOKIE_SAMESITE=none` on the API — it forces
+`Secure` and is the only mode browsers accept cross-site, but Safari and
+Chrome's third-party-cookie restrictions can still drop it. Prefer the proxy.
 
 ---
 
@@ -47,7 +50,7 @@ per attempt instead of exiting immediately.
 ### Checks
 
 ```bash
-cd my-site/backend && npm test                 # API + integration suite (52 tests)
+cd my-site/backend && npm test                 # API + integration suite (56 tests)
 node audit/e2e-flow.mjs http://127.0.0.1:5173  # 45 end-to-end assertions
 node audit/live-audit.mjs                      # 105 HTTP assertions on a throwaway DB
 cd my-site && npm run build                    # production bundle
@@ -78,6 +81,7 @@ by Zod at boot; an invalid file stops the process with a readable list.
 | `JWT_REFRESH_TTL_DAYS` | no | default `30` |
 | `COOKIE_SECURE` | no | forced on in production |
 | `COOKIE_DOMAIN` | no | only when the API is on a subdomain of the site |
+| `COOKIE_SAMESITE` | no | `lax` (default) for a same-origin/proxied API; `none` only for a genuinely cross-site API over HTTPS |
 | `APP_URL` | yes | public site URL (used in emails) |
 | `RESTAURANT_TIMEZONE` | no | default `America/New_York` |
 | `TAX_RATE` | no | default `0.08875` |
@@ -160,9 +164,19 @@ and refuses state-changing requests whose `Origin` is not in `CLIENT_ORIGINS`.
 
 For the Vercel frontend and Render API deployment, `vercel.json` proxies `/api/*`
 to the Render service so browser requests and auth cookies stay on the frontend
-origin. Set the Render API's `CLIENT_ORIGINS` to
-`https://savora-restaurant-five.vercel.app`, then redeploy the frontend so the
-rewrite takes effect.
+origin.
+
+* `vercel.json` contains the Render hostname in its `destination`. It is the one
+  place an infrastructure URL appears in this repo and `vercel.json` cannot read
+  environment variables, so update it whenever the Render service URL changes
+  (and re-deploy the frontend for the rewrite to take effect).
+* Set the API's `CLIENT_ORIGINS` to the **exact** Vercel origin, e.g.
+  `https://savora-restaurant-five.vercel.app` — including every custom domain.
+  A missing entry surfaces in the browser as `403 ORIGIN_NOT_ALLOWED` on
+  POST/PATCH/DELETE while GETs (including the menu) still work, which is the
+  signature of this misconfiguration.
+* Keep `COOKIE_SAMESITE=lax` here: Vercel's rewrite makes the requests
+  same-origin, so the session cookies are first-party.
 
 ---
 
@@ -192,6 +206,22 @@ npm run admin:reset   # updates the configured admin, promotes it, revokes old s
 
 It prints the affected email and role but never the password. Use this instead
 of editing the database by hand.
+
+### Empty database (the most common "broken deploy")
+
+A new Atlas cluster connects successfully and then serves an **empty menu and no
+administrator**, so the site looks broken (`/api/menu` returns `0` items, no
+account can sign in). The API now prints a warning at boot when the menu
+collection is empty. Fix with:
+
+```bash
+cd backend
+npm run seed          # 13 dishes + the administrator from SEED_ADMIN_EMAIL/PASSWORD
+```
+
+It is idempotent for the admin (existing password untouched) but rewrites dish
+content from `src/scripts/seedData.js`; on a live database that already has a
+real menu, create dishes in the dashboard instead.
 
 MongoDB backups: enable daily snapshots/point-in-time restore on the cluster and
 test one restore before handover. Application data lives only in MongoDB; there
