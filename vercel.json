@@ -29,9 +29,21 @@
       ]
     },
     {
-      "source": "/(favicon.svg|icons.svg)",
+      "source": "/favicon.svg",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    },
+    {
+      "source": "/icons.svg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store" }
       ]
     }
   ],
@@ -39,6 +51,14 @@
     {
       "source": "/api/:path*",
       "destination": "https://savora-backend-4haz.onrender.com/api/:path*"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/__missing_static_asset__"
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": "/__missing_static_asset__"
     },
     {
       "source": "/(.*)",
