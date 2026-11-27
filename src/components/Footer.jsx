@@ -1,5 +1,4 @@
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
-import { Reveal } from "./ui/Reveal";
 import { Magnetic } from "./ui/Magnetic";
 import { ContactForm } from "./ContactForm";
 

@@ -21,7 +21,6 @@ async function connectWithRetry({ attempts = 12, delayMs = 5000 } = {}) {
         `[server] MongoDB unavailable (attempt ${attempt}/${attempts}): ${error.message}. ` +
           `Retrying in ${Math.round(delayMs / 1000)}s — is mongod running?`,
       );
-      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
@@ -101,3 +100,4 @@ async function main() {
 }
 
 main();
+

@@ -1,5 +1,11 @@
 "use client";
 
+/* eslint-disable react-hooks/refs, react-hooks/immutability, react-hooks/set-state-in-effect --
+   The conveyor is an imperative requestAnimationFrame surface: layout measurements,
+   pointer state and the latest callbacks live in refs that the loop reads each frame,
+   and prop changes are mirrored into that state. Driving the same behaviour through
+   render-phase state would reintroduce the per-frame re-render the loop exists to avoid. */
+
 import * as React from "react";
 import { createPortal } from "react-dom";
 
@@ -530,6 +536,8 @@ export function SushiConveyorMenu({
 
   React.useEffect(() => { setPlaying(autoplay); }, [autoplay]);
 
+  const hasDishes = count > 0;
+
   React.useLayoutEffect(() => {
     const section = sectionRef.current;
     const stage = stageRef.current;
@@ -543,7 +551,7 @@ export function SushiConveyorMenu({
     observer.observe(section);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [count > 0]);
+  }, [hasDishes]);
 
   React.useLayoutEffect(() => {
     const s = sim.current;

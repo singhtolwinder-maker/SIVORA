@@ -72,7 +72,6 @@ export async function rotateSession(rawRefreshToken) {
   const stored = (user.refreshTokens || []).filter((entry) => entry.expiresAt > new Date());
   let matchedIndex = -1;
   for (let index = 0; index < stored.length; index += 1) {
-    // eslint-disable-next-line no-await-in-loop
     if (await User.verifyToken(rawRefreshToken, stored[index].tokenHash)) {
       matchedIndex = index;
       break;
@@ -96,7 +95,6 @@ export async function logout(rawRefreshToken) {
 
     const remaining = [];
     for (const entry of user.refreshTokens || []) {
-      // eslint-disable-next-line no-await-in-loop
       if (!(await User.verifyToken(rawRefreshToken, entry.tokenHash))) remaining.push(entry);
     }
     user.refreshTokens = remaining;
@@ -182,3 +180,4 @@ export default {
   changePassword,
   updateProfile,
 };
+

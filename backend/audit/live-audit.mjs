@@ -504,7 +504,6 @@ async function main() {
 
   const pipeline = [];
   for (const status of ["confirmed", "preparing", "ready", "delivered"]) {
-    // eslint-disable-next-line no-await-in-loop
     const step = await call(admin, "PATCH", `/api/admin/orders/${order.id}/status`, { body: { status } });
     pipeline.push(`${status}:${step.status}`);
   }
@@ -561,7 +560,6 @@ async function main() {
   const capacityDate = nextOpenDate(3);
   const capacityPosts = [];
   for (const [index, size] of [12, 12, 1].entries()) {
-    // eslint-disable-next-line no-await-in-loop
     const attempt = await call(null, "POST", "/api/reservations", {
       body: { name: `Cap ${index}`, email: `cap${index}.${digits(index)}@savora.audit`, date: capacityDate, time: "18:00", partySize: size },
     });
@@ -702,3 +700,4 @@ main().catch(async (error) => {
   }
   process.exit(1);
 });
+

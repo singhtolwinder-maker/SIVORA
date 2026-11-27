@@ -78,5 +78,3 @@ export function RevealItem({ children, as = "div", y = 24, className, ...rest })
     </Comp>
   );
 }
-
-export { EASE };

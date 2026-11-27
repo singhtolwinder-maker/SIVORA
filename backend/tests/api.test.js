@@ -552,7 +552,6 @@ describe("cart", () => {
 describe("orders", () => {
   async function fillCart(agent, items) {
     for (const [slug, quantity] of items) {
-      // eslint-disable-next-line no-await-in-loop
       const response = await agent
         .post("/api/cart/items")
         .send({ menuItemId: String(menu[slug]._id), quantity });
@@ -653,7 +652,6 @@ describe("orders", () => {
     assert.equal(illegal.body.error.code, "INVALID_STATUS_TRANSITION");
 
     for (const status of ["confirmed", "preparing", "ready", "delivered"]) {
-      // eslint-disable-next-line no-await-in-loop
       const step = await adminAgent.patch(`/api/admin/orders/${id}/status`).send({ status });
       assert.equal(step.status, 200, `transition to ${status} failed`);
       assert.equal(step.body.data.status, status);
@@ -957,3 +955,4 @@ describe("security", () => {
     }
   });
 });
+

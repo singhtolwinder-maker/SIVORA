@@ -1,5 +1,10 @@
 'use client';
 
+/* eslint-disable react-refresh/only-export-components --
+   This primitive exports its components together with `navigationMenuTriggerStyle`,
+   the standard shadcn layout. Splitting the style helper into another module would
+   churn every import for a dev-server hot-reload rule only. */
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { cva } from 'class-variance-authority';

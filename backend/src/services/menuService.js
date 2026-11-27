@@ -23,7 +23,6 @@ async function uniqueSlug(name, ignoreId) {
   while (counter < 50) {
     const query = { slug: candidate };
     if (ignoreId) query._id = { $ne: ignoreId };
-    // eslint-disable-next-line no-await-in-loop
     const exists = await MenuItem.exists(query);
     if (!exists) return candidate;
     counter += 1;
@@ -32,7 +31,7 @@ async function uniqueSlug(name, ignoreId) {
   return `${base}-${Date.now()}`;
 }
 
-export async function listMenu({ page, limit, skip, search, category, minPrice, maxPrice, available, featured, sort }) {
+export async function listMenu({ limit, skip, search, category, minPrice, maxPrice, available, featured, sort }) {
   const filter = {};
 
   if (category) filter.category = category;

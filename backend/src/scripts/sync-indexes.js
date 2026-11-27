@@ -15,7 +15,6 @@ async function main() {
   try {
     await connectDatabase();
     for (const model of Object.values(mongoose.models)) {
-      // eslint-disable-next-line no-await-in-loop
       const result = await model.syncIndexes();
       console.info(`[indexes] ${model.modelName}: ${result.length} index synced.`);
     }
@@ -29,3 +28,4 @@ async function main() {
 }
 
 main();
+
