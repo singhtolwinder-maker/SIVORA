@@ -1,0 +1,349 @@
+{
+  "/images/bar-whiskey.jpg": {
+    "width": 1184,
+    "height": 880,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/bar-whiskey-480.webp",
+        "avif": "/images/bar-whiskey-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/bar-whiskey-768.webp",
+        "avif": "/images/bar-whiskey-768.avif"
+      },
+      {
+        "width": 1184,
+        "webp": "/images/bar-whiskey-1184.webp",
+        "avif": "/images/bar-whiskey-1184.avif"
+      }
+    ]
+  },
+  "/images/chef-pass.jpg": {
+    "width": 880,
+    "height": 1184,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/chef-pass-480.webp",
+        "avif": "/images/chef-pass-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/chef-pass-768.webp",
+        "avif": "/images/chef-pass-768.avif"
+      },
+      {
+        "width": 880,
+        "webp": "/images/chef-pass-880.webp",
+        "avif": "/images/chef-pass-880.avif"
+      }
+    ]
+  },
+  "/images/chef-special.jpg": {
+    "width": 1184,
+    "height": 880,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/chef-special-480.webp",
+        "avif": "/images/chef-special-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/chef-special-768.webp",
+        "avif": "/images/chef-special-768.avif"
+      },
+      {
+        "width": 1184,
+        "webp": "/images/chef-special-1184.webp",
+        "avif": "/images/chef-special-1184.avif"
+      }
+    ]
+  },
+  "/images/dish-burger.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-burger-480.webp",
+        "avif": "/images/dish-burger-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-burger-768.webp",
+        "avif": "/images/dish-burger-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-burger-1024.webp",
+        "avif": "/images/dish-burger-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-cheesecake.jpg": {
+    "width": 700,
+    "height": 467,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-cheesecake-480.webp",
+        "avif": "/images/dish-cheesecake-480.avif"
+      },
+      {
+        "width": 700,
+        "webp": "/images/dish-cheesecake-700.webp",
+        "avif": "/images/dish-cheesecake-700.avif"
+      }
+    ]
+  },
+  "/images/dish-chicken-sandwich.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-chicken-sandwich-480.webp",
+        "avif": "/images/dish-chicken-sandwich-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-chicken-sandwich-768.webp",
+        "avif": "/images/dish-chicken-sandwich-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-chicken-sandwich-1024.webp",
+        "avif": "/images/dish-chicken-sandwich-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-filet.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-filet-480.webp",
+        "avif": "/images/dish-filet-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-filet-768.webp",
+        "avif": "/images/dish-filet-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-filet-1024.webp",
+        "avif": "/images/dish-filet-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-fried-chicken.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-fried-chicken-480.webp",
+        "avif": "/images/dish-fried-chicken-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-fried-chicken-768.webp",
+        "avif": "/images/dish-fried-chicken-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-fried-chicken-1024.webp",
+        "avif": "/images/dish-fried-chicken-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-fries.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-fries-480.webp",
+        "avif": "/images/dish-fries-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-fries-768.webp",
+        "avif": "/images/dish-fries-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-fries-1024.webp",
+        "avif": "/images/dish-fries-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-mac-cheese.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-mac-cheese-480.webp",
+        "avif": "/images/dish-mac-cheese-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-mac-cheese-768.webp",
+        "avif": "/images/dish-mac-cheese-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-mac-cheese-1024.webp",
+        "avif": "/images/dish-mac-cheese-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-onion-rings.jpg": {
+    "width": 700,
+    "height": 1050,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-onion-rings-480.webp",
+        "avif": "/images/dish-onion-rings-480.avif"
+      },
+      {
+        "width": 700,
+        "webp": "/images/dish-onion-rings-700.webp",
+        "avif": "/images/dish-onion-rings-700.avif"
+      }
+    ]
+  },
+  "/images/dish-pulled-pork.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-pulled-pork-480.webp",
+        "avif": "/images/dish-pulled-pork-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-pulled-pork-768.webp",
+        "avif": "/images/dish-pulled-pork-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-pulled-pork-1024.webp",
+        "avif": "/images/dish-pulled-pork-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-ribeye.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-ribeye-480.webp",
+        "avif": "/images/dish-ribeye-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-ribeye-768.webp",
+        "avif": "/images/dish-ribeye-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-ribeye-1024.webp",
+        "avif": "/images/dish-ribeye-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-ribs.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-ribs-480.webp",
+        "avif": "/images/dish-ribs-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-ribs-768.webp",
+        "avif": "/images/dish-ribs-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-ribs-1024.webp",
+        "avif": "/images/dish-ribs-1024.avif"
+      }
+    ]
+  },
+  "/images/dish-smash-burger.jpg": {
+    "width": 1024,
+    "height": 1024,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/dish-smash-burger-480.webp",
+        "avif": "/images/dish-smash-burger-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/dish-smash-burger-768.webp",
+        "avif": "/images/dish-smash-burger-768.avif"
+      },
+      {
+        "width": 1024,
+        "webp": "/images/dish-smash-burger-1024.webp",
+        "avif": "/images/dish-smash-burger-1024.avif"
+      }
+    ]
+  },
+  "/images/interior-night.jpg": {
+    "width": 1392,
+    "height": 752,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/interior-night-480.webp",
+        "avif": "/images/interior-night-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/interior-night-768.webp",
+        "avif": "/images/interior-night-768.avif"
+      },
+      {
+        "width": 1392,
+        "webp": "/images/interior-night-1392.webp",
+        "avif": "/images/interior-night-1392.avif"
+      }
+    ]
+  },
+  "/images/room-interior.jpg": {
+    "width": 1200,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "webp": "/images/room-interior-480.webp",
+        "avif": "/images/room-interior-480.avif"
+      },
+      {
+        "width": 768,
+        "webp": "/images/room-interior-768.webp",
+        "avif": "/images/room-interior-768.avif"
+      },
+      {
+        "width": 1200,
+        "webp": "/images/room-interior-1200.webp",
+        "avif": "/images/room-interior-1200.avif"
+      }
+    ]
+  }
+}

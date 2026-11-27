@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ArrowDown, ArrowRight, Star } from "lucide-react";
 import { Magnetic } from "./ui/Magnetic";
+import { ResponsiveImage } from "./ui/ResponsiveImage";
 
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -36,9 +37,10 @@ export function Hero() {
     >
       {/* Cinematic backdrop */}
       <motion.div style={reduce ? undefined : { y: imageY }} className="absolute inset-0 z-0 scale-[1.08]">
-        <img
+        <ResponsiveImage
           src="/images/interior-night.jpg"
           alt=""
+          sizes="100vw"
           width="1392"
           height="752"
           fetchPriority="high"

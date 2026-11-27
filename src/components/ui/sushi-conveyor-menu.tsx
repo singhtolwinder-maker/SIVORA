@@ -9,6 +9,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { lockBodyScroll } from "@/lib/scrollLock";
+import { ResponsiveImage } from "@/components/ui/ResponsiveImage";
 
 export type DishTier = 1 | 2 | 3 | 4 | 5;
 
@@ -870,9 +871,10 @@ export function SushiConveyorMenu({
                 <span className="absolute inset-[30%] rounded-[50%] bg-muted-foreground/20" />
               </span>
               {!broken && (
-                <img
+                <ResponsiveImage
                   src={item.image}
                   alt=""
+                  sizes="(min-width: 640px) 150px, 110px"
                   draggable={false}
                   onError={() => setFailed((old) => (old[item.id] ? old : { ...old, [item.id]: true }))}
                   className="pointer-events-none absolute inset-0 size-full select-none rounded-[50%] object-cover"
@@ -1068,7 +1070,7 @@ function DishDialog({ uid, item, index, total, labels, reduced, broken, source, 
               <span className="absolute inset-[30%] rounded-full bg-muted-foreground/25" />
             </span>
           ) : (
-            <img src={item.image} alt={item.name} draggable={false} className="relative size-full select-none rounded-[50%] object-cover" />
+            <ResponsiveImage src={item.image} alt={item.name} sizes="(min-width: 640px) 340px, 60vw" draggable={false} className="relative size-full select-none rounded-[50%] object-cover" />
           )}
           <span aria-hidden="true" className={`absolute -inset-[1.5%] rounded-full border-[3px] ${tier.ring}`} />
         </div>

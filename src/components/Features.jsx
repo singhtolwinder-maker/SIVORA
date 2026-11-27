@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Flame, ShieldCheck, Timer, Wine } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "./ui/Reveal";
 import { SplitText } from "./ui/SplitText";
+import { ResponsiveImage } from "./ui/ResponsiveImage";
 
 const pillars = [
   {
@@ -53,17 +54,22 @@ export function Features() {
         {/* Image */}
         <Reveal className="relative">
           <div className="relative overflow-hidden rounded-2xl border border-line">
-            <motion.img
-              src="/images/room-interior.jpg"
-              alt="The SAVORA dining room before service, set with linen and glassware"
-              loading="lazy"
-              decoding="async"
+            <motion.div
               initial={{ scale: 1.12 }}
               whileInView={{ scale: 1 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-              className="aspect-[4/5] w-full object-cover brightness-[0.68] contrast-[1.08] saturate-[0.85]"
-            />
+              className="aspect-[4/5] w-full"
+            >
+              <ResponsiveImage
+                src="/images/room-interior.jpg"
+                alt="The SAVORA dining room before service, set with linen and glassware"
+                sizes="(min-width: 1024px) 45vw, 100vw"
+                loading="lazy"
+                decoding="async"
+                className="size-full object-cover brightness-[0.68] contrast-[1.08] saturate-[0.85]"
+              />
+            </motion.div>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/10 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 sm:p-8">
               <p className="text-[9px] uppercase tracking-[0.34em] text-gold-light/80">

@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { ArrowRight, Flame, Leaf, UtensilsCrossed } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
 import { Magnetic } from "./ui/Magnetic";
+import { ResponsiveImage } from "./ui/ResponsiveImage";
 
 const courses = [
   { number: "I", name: "Raw & Cured", copy: "Hudson Valley trout, smoked crème fraîche, rye crisp" },
@@ -31,9 +32,10 @@ export function ChefSpecial() {
         {/* Portrait */}
         <Reveal className="relative order-2 lg:order-1">
           <div className="relative overflow-hidden rounded-2xl border border-line">
-            <img
+            <ResponsiveImage
               src="/images/chef-pass.jpg"
               alt="SAVORA's chef slicing a rested ribeye under the pass lights"
+              sizes="(min-width: 1024px) 45vw, 100vw"
               loading="lazy"
               decoding="async"
               className="aspect-[4/5] w-full object-cover transition-transform duration-[1600ms] ease-silk hover:scale-[1.04]"

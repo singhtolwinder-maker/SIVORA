@@ -7,6 +7,7 @@ import { lockBodyScroll } from "@/lib/scrollLock";
 import { useShop } from "@/lib/shop";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ResponsiveImage } from "@/components/ui/ResponsiveImage";
 
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -175,6 +176,9 @@ function mapApiDish(item) {
     description: item.description,
     details: item.details?.length ? item.details : item.ingredients || [],
     image: item.imageUrl,
+    // The database carries an editorial description of each photograph; using
+    // it is a better alt text than repeating the dish name.
+    imageAlt: item.imageAlt,
     tier: item.tier ?? 3,
     tag: item.isFeatured ? "Chef's cut" : undefined,
   };
@@ -234,9 +238,10 @@ function DishDialog({ dish, onClose, onAdd }) {
 
             <div className="grid sm:grid-cols-2">
               <div className="relative h-56 overflow-hidden sm:h-full">
-                <img
+                <ResponsiveImage
                   src={dish.image}
-                  alt={dish.name}
+                  alt={dish.imageAlt || dish.name}
+                  sizes="(min-width: 640px) 50vw, 100vw"
                   className="size-full object-cover"
                   loading="eager"
                 />
@@ -307,9 +312,10 @@ function DishCard({ dish, index, onOpen, onAdd }) {
         aria-label={`${dish.name}, ${dish.price}. View details.`}
       >
         <div className="relative overflow-hidden">
-          <img
+          <ResponsiveImage
             src={dish.image}
-            alt={dish.name}
+            alt={dish.imageAlt || dish.name}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             loading="lazy"
             decoding="async"
             width="600"
@@ -511,9 +517,10 @@ export function Menu() {
         <Reveal className="mt-16 lg:mt-24">
           <div className="grid overflow-hidden rounded-2xl border border-line bg-coal/40 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="relative min-h-[18rem] overflow-hidden lg:min-h-[26rem]">
-              <img
+              <ResponsiveImage
                 src={featuredDish.image}
-                alt="Tomahawk ribeye sliced to reveal a medium-rare centre"
+                alt={featuredDish.imageAlt || "Tomahawk ribeye sliced to reveal a medium-rare centre"}
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 loading="lazy"
                 decoding="async"
                 className="size-full object-cover transition-transform duration-[1400ms] ease-silk hover:scale-[1.04]"

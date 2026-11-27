@@ -4,6 +4,7 @@ import { AlertCircle, ArrowRight, Check, Minus, Plus, ShoppingBag, Trash2, X } f
 import { useShop } from "../../lib/shop";
 import { lockBodyScroll } from "../../lib/scrollLock";
 import { money, dateTimeLabel } from "../../lib/format";
+import { ResponsiveImage } from "../ui/ResponsiveImage";
 
 const emptyCheckout = {
   name: "",
@@ -234,9 +235,10 @@ function CartLines() {
           return (
             <li key={id} className="flex gap-3 py-4">
               {line.menuItem?.imageUrl && (
-                <img
+                <ResponsiveImage
                   src={line.menuItem.imageUrl}
                   alt=""
+                  sizes="64px"
                   className="size-16 shrink-0 rounded-lg object-cover"
                   loading="lazy"
                 />

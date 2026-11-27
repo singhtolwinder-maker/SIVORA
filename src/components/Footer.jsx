@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
 import { Magnetic } from "./ui/Magnetic";
 import { ContactForm } from "./ContactForm";
+import { ResponsiveImage } from "./ui/ResponsiveImage";
 
 const hours = [
   { day: "Tuesday – Thursday", time: "5:00 PM – 10:30 PM" },
@@ -29,9 +30,10 @@ export function Footer() {
       {/* Reservation band */}
       <div className="relative isolate border-t border-line/60">
         <div className="absolute inset-0 -z-10">
-          <img
+          <ResponsiveImage
             src="/images/interior-night.jpg"
             alt=""
+            sizes="100vw"
             loading="lazy"
             className="size-full object-cover"
           />

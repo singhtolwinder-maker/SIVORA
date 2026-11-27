@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft, LogOut, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "../lib/api";
+import { ResponsiveImage } from "../components/ui/ResponsiveImage";
 import {
   ORDER_STATUS_FLOW,
   RESERVATION_STATUS_FLOW,
@@ -542,7 +543,15 @@ function MenuPanel() {
         {rows.map((item) => (
           <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/60 bg-coal/25 px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              {item.imageUrl && <img src={item.imageUrl} alt="" className="size-11 rounded-lg object-cover" loading="lazy" />}
+              {item.imageUrl && (
+                <ResponsiveImage
+                  src={item.imageUrl}
+                  alt=""
+                  sizes="44px"
+                  className="size-11 rounded-lg object-cover"
+                  loading="lazy"
+                />
+              )}
               <div className="min-w-0">
                 <p className="truncate text-[13px] text-cream/90">{item.name}</p>
                 <p className="text-[11px] text-sand/55">

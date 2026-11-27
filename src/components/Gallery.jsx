@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Expand, X } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
 import { SectionHeading } from "./ui/SectionHeading";
+import { ResponsiveImage } from "./ui/ResponsiveImage";
 
 const shots = [
   {
@@ -124,9 +125,10 @@ export function Gallery() {
                 className="relative block size-full cursor-pointer overflow-hidden rounded-xl border border-line/70 bg-coal text-left"
                 aria-label={`View larger: ${shot.caption}`}
               >
-                <img
+                <ResponsiveImage
                   src={shot.src}
                   alt={shot.alt}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   loading="lazy"
                   decoding="async"
                   className="size-full object-cover transition-transform duration-[1200ms] ease-silk group-hover:scale-[1.07]"
@@ -182,9 +184,10 @@ export function Gallery() {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="flex max-h-full w-full max-w-4xl flex-col"
               >
-                <img
+                <ResponsiveImage
                   src={active.src}
                   alt={active.alt}
+                  sizes="(min-width: 896px) 896px, 100vw"
                   className="max-h-[70svh] w-full rounded-xl border border-line object-contain"
                 />
                 <figcaption className="mt-4 text-center font-serif text-lg italic text-cream/85">
