@@ -421,3 +421,75 @@ The application is **not yet feature-complete** for a restaurant that needs emai
 card payments and customer reviews: those three are unimplemented or unconfigured, and they
 are the honest boundary of this delivery. They are not silent gaps — each is listed above with
 what it would take to finish.
+
+---
+
+## 20. Independent re-verification — 27 November 2026
+
+The whole verification set was re-run from a clean checkout state at commit `683135b`, with no
+code changes, to confirm nothing had drifted. Every check below was executed today.
+
+| Check | Command / method | Result |
+| --- | --- | --- |
+| Backend suite | `npm test` in `backend/` | **PASS** — 56 tests, 11 suites, 0 fail |
+| Lint | `npm run lint` | **PASS** — exit 0, no output |
+| Production build | `npm run build` | **PASS** — 2030 modules, `index-B69NRqge.js` 609.69 kB / 181.04 kB gzip |
+| Deployed bundle identity | sha256 of local `dist/` vs served asset | **PASS** — identical (`3b9221ae…`) |
+| Frontend root | `GET /` | **PASS** — 200 |
+| Admin SPA fallback | `GET /admin` | **PASS** — 200, renders the sign-in gate |
+| Security headers | response headers on `/` | **PASS** — CSP, `nosniff`, `DENY`, `Referrer-Policy`, `Permissions-Policy` |
+| API health | `GET /api/health` | **PASS** — `database: connected` |
+| Same-origin API rewrite | `GET /api/menu` via Vercel | **PASS** — 200 |
+| Menu payload | `GET /api/menu?limit=100&available=true&sort=newest` | **PASS** — 13 items, `total: 13`, no duplicate slugs |
+| Foreign-origin CORS | `OPTIONS` with `Origin: https://evil.example.com` | **PASS** — 403, no `Access-Control-Allow-Origin` |
+| Foreign-origin write | `POST /api/auth/login` with foreign origin | **PASS** — 403 |
+| Protected reads | `GET /api/cart`, `POST /api/menu` | **PASS** — 401 for both |
+| Unknown API route | `GET /api/nope` | **PASS** — 404 |
+| Invalid query | `GET /api/menu?limit=999` | **PASS** — 422 `VALIDATION_ERROR` with a field-level message |
+| CI status | GitHub Actions, latest three commits | **PASS** — `683135b`, `c5e1f10`, `f0a950b` all green |
+
+Live browser pass — Playwright, real Chromium at 1440×900 then 360×800, against production:
+
+| Journey | Result |
+| --- | --- |
+| Menu renders one card per dish | **PASS** — 13 cards, 13 unique |
+| Plate counter matches the card count | **PASS** |
+| Dish dialog opens with the right dish | **PASS** — “Dry-Aged Tomahawk” |
+| Dialog close button | **PASS** — closes, body scroll released |
+| Dialog Escape key | **PASS** |
+| Order drawer opens | **PASS** — “Your order / Sign in to start an order.” |
+| Order drawer Escape key | **PASS** |
+| In-page navigation anchors | **PASS** — all 9 resolve to real elements |
+| Horizontal overflow at 360 px | **PASS** — 0 px |
+| Console errors and warnings | **PASS** — none |
+
+**12/12 journey checks passed, 16/16 network and API checks passed.**
+
+### Two false alarms investigated and dismissed
+
+During this pass the automation briefly reported two defects, and both were traced to the
+inspection environment rather than to the application:
+
+1. **“26 dish cards for 13 dishes.”** A DOM read taken mid-swap showed every dish twice. The
+   menu initially renders the house fallback menu and replaces it with live API data; the
+   `AnimatePresence` exit animation for the 13 outgoing cards had not finished at capture time.
+   A delayed re-read showed 13 cards, and the Playwright pass — where animation frames actually
+   run — confirmed 13. The duplicates were committed by the transition, not the data: the API
+   returns 13 unique slugs for the exact URL the page requests.
+2. **“The dish dialog does not close.”** The close button released React state but the node
+   stayed in the DOM. The cause was `document.hidden === true` with **0** animation frames in
+   one second inside the side-panel browser, so framer-motion never ran the exit animation. In a
+   real Chromium the dialog closes on both the close button and Escape, and body scroll is
+   restored.
+
+Neither is a product defect. Both are recorded because an audit that silently drops its own
+false positives is not trustworthy.
+
+### Unchanged classification
+
+Nothing in this re-verification alters the assessment in §17–§19. The remaining gaps are still
+the owner-only items in §18: production admin password rotation, `SEED_ADMIN_PASSWORD` removal,
+`IP_HASH_SALT`, a transactional email provider, the payment contract, Atlas access and backup
+hardening, and the deliberate decisions on reviews and profile editing. The `zod` advisory
+remains **BLOCKED**: its only fix is the semver-major `zod@4` upgrade, which changes the
+validation layer wholesale and needs its own test pass.
