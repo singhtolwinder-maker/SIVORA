@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { Menu } from "./components/Menu";
@@ -14,8 +14,15 @@ import { BackToTop, ScrollProgress } from "./components/ui/ScrollProgress";
 import { Marquee } from "./components/ui/Marquee";
 import { CartDrawer } from "./components/shop/CartDrawer";
 import { AccountPanel } from "./components/shop/AccountPanel";
-import AdminApp from "./admin/AdminApp";
 import { ShopProvider, useShop } from "./lib/shop";
+
+// The house dashboard is the only thing that is split out of the storefront
+// bundle: no public visitor needs its tables, forms and extra icons, and it is
+// fetched on demand when /admin is opened. The cart drawer and account panel
+// stay in the entry bundle on purpose - they read shop state to know whether
+// they are open, so a lazy import would be requested during the first render
+// anyway and only add a round trip to the first click.
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 const marqueeItems = [
   "Dry-aged 28 days",
@@ -93,11 +100,28 @@ function Storefront() {
   );
 }
 
+/** Matches the dashboard's own dark shell, so the split chunk does not flash white. */
+function AdminFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-screen items-center justify-center bg-ink px-6 text-center text-[11px] uppercase tracking-[0.3em] text-sand/70"
+    >
+      Loading the house dashboard…
+    </div>
+  );
+}
+
 function App() {
   // The house dashboard is a second entry point on the same bundle, so it keeps
   // working with the Vite dev server and a static SPA fallback.
   if (window.location.pathname.replace(/\/+$/, "") === "/admin") {
-    return <AdminApp />;
+    return (
+      <Suspense fallback={<AdminFallback />}>
+        <AdminApp />
+      </Suspense>
+    );
   }
 
   return (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { lockBodyScroll } from "../../lib/scrollLock";
 import { AnimatePresence, motion } from "motion/react";
 import { LogOut, X } from "lucide-react";
 import { api } from "../../lib/api";
@@ -41,11 +42,10 @@ export function AccountPanel() {
     const onKey = (event) => {
       if (event.key === "Escape") closeAccount();
     };
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previous;
+      unlock();
       window.removeEventListener("keydown", onKey);
     };
   }, [accountOpen, closeAccount]);

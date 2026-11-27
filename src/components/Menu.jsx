@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, Plus, X } from "lucide-react";
 import { SushiConveyorMenu } from "@/components/ui/sushi-conveyor-menu";
 import { api } from "@/lib/api";
+import { lockBodyScroll } from "@/lib/scrollLock";
 import { useShop } from "@/lib/shop";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -181,12 +182,8 @@ function mapApiDish(item) {
 
 function useLockBody(locked) {
   useEffect(() => {
-    if (!locked) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    if (!locked) return undefined;
+    return lockBodyScroll();
   }, [locked]);
 }
 

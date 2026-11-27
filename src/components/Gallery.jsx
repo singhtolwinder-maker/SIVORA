@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { lockBodyScroll } from "@/lib/scrollLock";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Expand, X } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
@@ -72,8 +73,7 @@ export function Gallery() {
 
   useEffect(() => {
     if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     closeRef.current?.focus();
 
     const onKey = (event) => {
@@ -84,7 +84,7 @@ export function Gallery() {
     window.addEventListener("keydown", onKey);
 
     return () => {
-      document.body.style.overflow = previous;
+      unlock();
       window.removeEventListener("keydown", onKey);
       lastFocused.current?.focus?.({ preventScroll: true });
     };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { lockBodyScroll } from "@/lib/scrollLock";
 
 /**
  * Short branded curtain shown while the hero photography decodes. It waits for
@@ -26,18 +27,17 @@ export function Preloader() {
     if (document.readyState === "complete") finish();
     else window.addEventListener("load", finish, { once: true });
 
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     return () => {
       window.clearTimeout(fallback);
       window.removeEventListener("load", finish);
-      document.body.style.overflow = previous;
     };
   }, [reduce]);
 
+  // One reference-counted lock for the whole app, so a drawer opened while the
+  // curtain is up cannot leave the page frozen after both close.
   useEffect(() => {
-    if (!open) document.body.style.overflow = "";
+    if (!open) return undefined;
+    return lockBodyScroll();
   }, [open]);
 
   return (

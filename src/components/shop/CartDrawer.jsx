@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AlertCircle, ArrowRight, Check, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useShop } from "../../lib/shop";
+import { lockBodyScroll } from "../../lib/scrollLock";
 import { money, dateTimeLabel } from "../../lib/format";
 
 const emptyCheckout = {
@@ -508,11 +509,10 @@ export function CartDrawer() {
     const onKey = (event) => {
       if (event.key === "Escape") closeCart();
     };
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previous;
+      unlock();
       window.removeEventListener("keydown", onKey);
     };
   }, [cartOpen, closeCart]);

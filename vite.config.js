@@ -12,6 +12,25 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep the runtime and the animation engine in their own long-lived
+        // chunks. They change far less often than the site itself, so returning
+        // visitors re-download only the app code, and the lazily loaded admin
+        // route reuses the same cached vendor chunks instead of fetching a
+        // second copy of React.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react'
+          if (/[\\/]node_modules[\\/](motion|motion-dom|motion-utils|framer-motion)[\\/]/.test(id)) {
+            return 'motion'
+          }
+          return undefined
+        },
+      },
+    },
+  },
   server: {
     // Bind the loopback address explicitly. Vite's default `localhost` resolves
     // to IPv6 ::1 on Windows, which makes http://127.0.0.1:5173 refuse

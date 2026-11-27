@@ -493,3 +493,151 @@ the owner-only items in §18: production admin password rotation, `SEED_ADMIN_PA
 hardening, and the deliberate decisions on reviews and profile editing. The `zod` advisory
 remains **BLOCKED**: its only fix is the semver-major `zod@4` upgrade, which changes the
 validation layer wholesale and needs its own test pass.
+
+## 21. Bundle splitting and scroll-lock remediation — 28 November 2026
+
+### 21.1 What the 609 kB actually was
+
+The number was real but its cause had never been measured. Building with a temporary
+`generateBundle` reporter (since removed) and ranking modules by rendered size gave:
+
+| Module | Size (pre-minify) | Verdict |
+| --- | --- | --- |
+| `react-dom/cjs/react-dom-client.production.js` | 517.1 kB | Framework floor, cannot be split away |
+| `src/components/ui/sushi-conveyor-menu.tsx` | 51.8 kB | In use (rendered by `Menu.jsx`) |
+| `motion-dom/.../create-projection-node.mjs` | 43.7 kB | Layout-projection feature of `motion` |
+| `src/admin/AdminApp.jsx` | 40.5 kB | **Should never have been in the public entry** |
+| `tailwind-merge/dist/bundle-mjs.mjs` | 37.2 kB | Used by `cn()` in the Radix nav menu |
+| `src/components/shop/CartDrawer.jsx` | 29.8 kB | Public, opens on click |
+| `@radix-ui/react-navigation-menu` | 28.4 kB | Public nav |
+| `src/components/Menu.jsx` | 27.5 kB | Public |
+
+So the bundle was not fat with stray dependencies: React plus ReactDOM is roughly
+85% of the minified bytes, and the only genuine mistake was that the admin dashboard
+— a screen no public visitor needs — shipped in the storefront entry.
+
+### 21.2 Changes made
+
+1. **Route-level split of the dashboard.** `src/App.jsx` now imports `AdminApp` through
+   `React.lazy` inside a `Suspense` boundary. The fallback is a dark, centred
+   `role="status"` line using the same tokens as the dashboard, so the split never
+   flashes a white screen on the black-and-gold shell.
+2. **Vendor chunking.** `vite.config.js` gained `build.rollupOptions.output.manualChunks`
+   that separates `react`/`react-dom`/`scheduler` and `motion`/`motion-dom`/`motion-utils`
+   into long-lived chunks. This is a caching change as much as a size change: after a site
+   deploy, a returning visitor re-downloads only the app chunk, and the lazily loaded admin
+   route reuses the same cached React instead of fetching a second copy.
+3. **Lazy drawers were tried and reverted — with evidence.** `CartDrawer` and `AccountPanel`
+   were split first, but instrumentation showed the browser requesting both chunks during the
+   *first* render: the components read `useShop()` to decide whether they are open, so
+   `Suspense` mounts them immediately. That produced extra chunks and a round trip on the first
+   cart click while deferring nothing. They were returned to static imports, and the reasoning
+   is recorded in a comment in `App.jsx` so the experiment is not repeated blindly.
+4. **Reference-counted scroll lock.** See §21.4 — a real bug, found while verifying the split.
+
+### 21.3 Measurements
+
+| Build | Files | Raw | Gzip |
+| --- | --- | --- | --- |
+| Before | `index-B69NRqge.js` | 609.69 kB | 181.04 kB |
+| After — entry | `index-BYgQuto2.js` | 213.66 kB | 58.07 kB |
+| After — React vendor | `react-Ibbx6Gbr.js` | 210.53 kB | 65.70 kB |
+| After — motion vendor | `motion-BFLdOOnU.js` | 161.84 kB | 55.07 kB |
+| After — runtime | `rolldown-runtime-*.js` | 0.59 kB | 0.36 kB |
+| After — admin (lazy) | `AdminApp-BFYr5MgE.js` | 24.48 kB | 5.22 kB |
+
+- Public first load: **586.6 kB / 179.2 kB gzip**, down from 609.7 kB / 181.0 kB gzip
+  (−23.1 kB raw, −1.8 kB gzip). Modest, and honestly reported: splitting cannot shrink React.
+- The `/admin` payload (24.5 kB / 5.2 kB gzip) is no longer part of any
+  public page load.
+- Per-deploy cache transfer for a returning visitor drops from 181.0 kB to 58.1 kB gzip.
+- The Vite "chunks larger than 500 kB" warning is gone; every emitted chunk is under 500 kB.
+- CSS is unchanged at 65.28 kB / 12.20 kB gzip.
+
+What is *not* claimed: total JavaScript on a cold first visit is essentially unchanged.
+There is no honest way to remove ReactDOM's ~210 kB, and `motion`'s layout-projection code
+would need a `LazyMotion`/`m` refactor across fifteen components to drop materially — a
+behavioural change deliberately not attempted here.
+
+### 21.4 Defect found during verification: the page could freeze after closing the cart
+
+Verification of the split opened the cart drawer immediately after page load and found
+`document.body.style.overflow === "hidden"` after the drawer had closed, with scrolling dead.
+
+Root cause: six overlays each captured `document.body.style.overflow` when they opened and
+wrote that captured value back when they closed. The preloader locks the body on mount; a
+drawer opened while the curtain was still up therefore captured `"hidden"` as its "previous"
+value and restored `"hidden"` on close, after the preloader had already released its own lock.
+Last write won, and the page stayed frozen until another overlay cycle.
+
+Fix: `src/lib/scrollLock.js` — a reference-counted lock with a single shared restore value,
+released idempotently (React StrictMode runs cleanups twice). All seven call sites now use it:
+`Preloader`, `Navbar` (mobile menu), `Menu` dish dialog, `Gallery` lightbox,
+`sushi-conveyor-menu` dish dialog, `CartDrawer`, `AccountPanel`. No direct
+`document.body.style.overflow` writes remain outside `scrollLock.js`.
+
+Reproduction matrix in Chromium against the production build (`vite preview`):
+
+| Scenario | Before | After |
+| --- | --- | --- |
+| Open drawer 2.5 s after load, close | `overflow=""`, scrolls | `overflow=""`, scrolls |
+| Open drawer 250 ms after load (curtain up), close at 3 s | `overflow="hidden"`, **frozen** | `overflow=""`, scrolls |
+| Open drawer 150 ms after load, close at 0.9 s | `overflow="hidden"`, **frozen** | `overflow=""`, scrolls |
+| Scroll to 900 px after closing | 0 px | 900 px |
+
+### 21.5 Verification run
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Production build | `npm run build` | **PASS** — 2032 modules, exit 0, no size warning |
+| Lint | `npm run lint` | **PASS** — exit 0, no output |
+| Backend regression suite | `cd backend && npm test` | **PASS** — 56/56 tests, 11 suites |
+| Admin chunk isolation | Playwright, network log | **PASS** — `AdminApp-*.js` absent from `/`, present on `/admin` |
+| Admin gate after split | Playwright | **PASS** — "House dashboard · Sign in with an administrator account", 2 inputs |
+| Storefront menu | Playwright | **PASS** — 13 add-to-cart buttons, `<h1>` intact |
+| Cart drawer | Playwright | **PASS** — opens, "Sign in to start an order.", closes (0 dialogs) |
+| Mobile 360 px | Playwright | **PASS** — 0 px horizontal overflow |
+| Console / page errors | Playwright | **PASS** — 0 `pageerror` on `/`, `/admin`, 360 px. The only console errors are `502` for `/api/*`, because `vite preview` has no proxy; on Vercel that path is rewritten to the API (§15) |
+
+The renderer was exercised in real Chromium, not the side preview panel, so the
+animation-throttling artefact described in §20 did not apply.
+
+### 21.6 Files changed
+
+`src/App.jsx`, `vite.config.js`, `src/lib/scrollLock.js` (new),
+`src/components/ui/Preloader.jsx`, `src/components/Navbar.jsx`, `src/components/Menu.jsx`,
+`src/components/Gallery.jsx`, `src/components/shop/CartDrawer.jsx`,
+`src/components/shop/AccountPanel.jsx`, `src/components/ui/sushi-conveyor-menu.tsx`.
+No component was restyled, no feature removed, no dependency added or upgraded.
+
+### 21.7 Classification
+
+- **Fixed and verified:** admin dashboard removed from the public bundle; React and motion
+  vendor chunks; the scroll-lock freeze (three reproduction scenarios + scroll assertion).
+- **Fixed but not yet verified in production:** all of the above, locally. The committed
+  build has not been deployed — see §21.8.
+- **Still unresolved:** cold-load JavaScript is 586.6 kB because ReactDOM dominates; a
+  further reduction needs a `LazyMotion` refactor of `motion` usage (estimated 25–35 kB gzip)
+  and is a separate, risky change. The 51.8 kB `sushi-conveyor-menu` is genuinely rendered
+  and was not removed. `tailwind-merge` (37.2 kB pre-minify) is only needed for the Radix nav
+  menu's `cn()` merging and was left alone.
+- **Requires approval:** `git push` and a Vercel production deployment. Nothing was pushed,
+  no deployment was triggered, and no production data was modified.
+
+### 21.8 Deployment and owner-only follow-ups (pending approval)
+
+To verify these fixes in production, explicit approval is required to (a) push the local
+commit to `origin/main` and (b) trigger a Vercel production deployment of the frontend.
+Nothing has been pushed and no deployment has been triggered.
+
+Owner-only configuration items that remain outside this change (§18):
+
+- Rotate the production admin password and remove `SEED_ADMIN_PASSWORD` from the environment.
+- Set `IP_HASH_SALT` for hashed IP logging.
+- Configure the SMTP provider for transactional email.
+- Add Stripe keys and the webhook endpoint.
+- Move Atlas to a least-privilege user and enable backups.
+
+Blocked (not attempted): the `zod` high advisory, which requires a semver-major upgrade to
+`zod@4.6.7` plus a full retest of the validation layer. Deferred: a `LazyMotion`/`m` refactor
+across ~15 components (est. 25–35 kB gzip), a separate, behavioural change.

@@ -10,6 +10,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useShop } from "@/lib/shop";
+import { lockBodyScroll } from "@/lib/scrollLock";
 
 const menuGroups = [
   { title: "Prime Cuts", copy: "Dry-aged ribeye, filet mignon, tomahawk", price: "$58 – $145" },
@@ -79,14 +80,13 @@ export function Navbar() {
 
   useEffect(() => {
     if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockBodyScroll();
     const onKey = (event) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previous;
+      unlock();
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
