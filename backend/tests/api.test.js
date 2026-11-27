@@ -177,6 +177,16 @@ describe("infrastructure", () => {
     assert.equal(response.body.data.database, "connected");
   });
 
+  // Verification depends on knowing which build answers, so the field must be
+  // present even where the host exports no commit (null here, a sha on Render).
+  it("names the build it was started from", async () => {
+    const response = await api.get("/api/health");
+
+    assert.equal(response.status, 200);
+    assert.ok("commit" in response.body.data);
+    assert.ok(response.body.data.commit === null || /^[0-9a-f]{7}$/.test(response.body.data.commit));
+  });
+
   it("returns a consistent 404 envelope", async () => {
     const response = await api.get("/api/nope");
     assert.equal(response.status, 404);

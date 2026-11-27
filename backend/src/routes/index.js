@@ -16,12 +16,17 @@ const router = Router();
 
 const DB_STATES = ["disconnected", "connected", "connecting", "disconnecting"];
 
+// Render exports the commit it built; exposing the short form here is what lets
+// a deploy be verified from outside instead of guessed from a restart time.
+const BUILD_COMMIT = (process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || "").slice(0, 7) || null;
+
 router.get("/health", (req, res) => {
   const state = DB_STATES[mongoose.connection.readyState] || "unknown";
   const healthy = state === "connected";
   const data = {
     status: healthy ? "ok" : "degraded",
     database: state,
+    commit: BUILD_COMMIT,
     uptimeSeconds: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
   };
