@@ -641,3 +641,231 @@ Owner-only configuration items that remain outside this change (§18):
 Blocked (not attempted): the `zod` high advisory, which requires a semver-major upgrade to
 `zod@4.6.7` plus a full retest of the validation layer. Deferred: a `LazyMotion`/`m` refactor
 across ~15 components (est. 25–35 kB gzip), a separate, behavioural change.
+## 22. Production release and live verification — 27 November 2026
+
+This section records the first release made under explicit authorisation: the verified commit was
+pushed to GitHub, deployed to Vercel production, and then inspected in a real browser at five
+widths. Nothing in it is inferred from a successful build; every claim below names the check that
+produced it.
+
+### 22.1 Release identity
+
+| Item | Value |
+| --- | --- |
+| Repository | `https://github.com/singhtolwinder-maker/SIVORA` |
+| Branch pushed | `main` → `origin/main` (fast-forward, no force, no history rewrite) |
+| Commit | `cf2f443ab2d48ef51043943a711274b18a3d563a` |
+| Remote after push | `git fetch` + `git rev-parse origin/main` returned the same SHA |
+| Vercel project | `savora-restaurant` (`prj_MdGBrQEzh5sAhhqbwYilBQXRsAmZ`), owner `singhtolwinder-maker` |
+| Framework / production branch | Vite / `main` |
+| Deployment | `dpl_47RWwpjarwaih3RMRrvghCAhpSzf`, target `production` |
+| Status | `READY` |
+| Created | 2026-11-27 10:29:44 UTC (15:29:44 IST) |
+| Build → ready | 7.7 s |
+| Deployment URL | `https://savora-restaurant-9vd2a1e8j-singhtolwinder-maker.vercel.app` |
+| Production alias | `https://savora-restaurant-five.vercel.app` |
+
+The deployment was produced by `vercel --prod` from the working tree of `cf2f443`, not by Vercel's
+Git integration, so Vercel's own metadata carries no commit SHA. Identity was therefore established
+by content instead: the served HTML references `index-BYgQuto2.js`, `react-Ibbx6Gbr.js`,
+`motion-BFLdOOnU.js`, `rolldown-runtime-WkwZ5CU-.js` and `AdminApp-BFYr5MgE.js` — byte-for-byte the
+asset names emitted by `npm run build` on `cf2f443` (§21.3, §22.5). A different commit or a stale
+build would have produced different hashes.
+
+### 22.2 Pre-release gate
+
+Run in this order, on a clean tree, before anything was pushed.
+
+| Gate | Command | Result |
+| --- | --- | --- |
+| Working tree | `git status --porcelain` | **PASS** — empty |
+| Commit present | `git cat-file -t cf2f443` | **PASS** — `commit`, full SHA above |
+| Production build | `npm run build` | **PASS** — 2032 modules, exit 0, no chunk-size warning |
+| Lint | `npm run lint` | **PASS** — exit 0, no output |
+| Backend suite | `cd backend && npm test` | **PASS** — 56/56 tests, 11 suites |
+| Secret scan (tracked files) | `git grep -E "sk_live\|sk_test\|AKIA…\|ghp_\|xox[baprs]-\|BEGIN … PRIVATE KEY\|mongodb+srv://[^<]"` | **PASS** — no matches; only `.env.example` templates are tracked |
+| Secrets in served bundles | `curl` each of the four emitted JS files, grep for `VERCEL_OIDC`, `eyJhbGciOi`, `sk_live`, `mongodb+srv` | **PASS** — 0 matches in all four |
+| Remote / project | `git remote -v`, `vercel projects ls`, `vercel project inspect` | **PASS** — expected repo, expected project, `main` |
+
+`vercel link` wrote a local `.env.local` containing a deployment OIDC token, and extended
+`.gitignore` with `.vercel` and `.env*`. That `.gitignore` change is kept (it is the correct
+hygiene); the token file was deleted after confirming no secret reached any served asset.
+
+Vercel environment variables were listed by name only: the project holds a single secret,
+`CLIENT_ORIGINS`, which belongs to the API's CORS allow-list rather than to Vite. The frontend needs
+no `VITE_*` variable in production because it calls `/api` on its own origin and `vercel.json`
+rewrites that path to `https://savora-backend-4haz.onrender.com/api/:path*` (§15). No value was read
+or printed.
+
+### 22.3 Response headers as served
+
+```
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=0, must-revalidate
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
+  https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:;
+  connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+```
+
+`connect-src 'self'` is still correct because the browser only ever talks to the site's own origin;
+the API is reached through the rewrite. Observation, not a defect: hashed files under `/assets/` are
+served with `max-age=0, must-revalidate` rather than a long `immutable` lifetime, so a returning
+visitor revalidates each asset (cheap `304`s) instead of skipping the request. The bandwidth claim in
+§21.3 — 181.0 kB → 58.1 kB gzip per deploy — still holds; only the round trips differ. Left
+unchanged deliberately, as it is not release-blocking.
+
+### 22.4 Live inspection
+
+Real Chromium (Playwright 1.65.1, headless) against the production alias. The side preview panel was
+not used for verdicts: it reports `document.hidden` and pauses `requestAnimationFrame`, which stalls
+motion exits (§20).
+
+| Width | Height | Page height | Horizontal overflow | Broken images | Console errors | Failed requests |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1440 | 900 | 12,772 px | none | 0 | 0 | 0 |
+| 1366 | 768 | 12,745 px | none | 0 | 0 | 0 |
+| 768 | 1024 | 17,793 px | none | 0 | 0 | 0 |
+| 390 | 844 | 21,326 px | none | 0 | 0 | 0 |
+| 360 | 780 | 20,869 px | none | 0 | 0 | 0 |
+
+`scrollWidth === clientWidth` at every width, including with the mobile menu open. 13 dish cards
+rendered at every width. Header items were additionally measured for overlap at 1366 and 1024: 11
+interactive elements, zero overlapping pairs, no clipping.
+
+Areas inspected, all against the live site:
+
+1. **Homepage / hero** — headline, eyebrow, CTAs, the "Tonight at SAVORA" card, stats rows. Text wraps
+   cleanly at 360; no element escapes the viewport.
+2. **Navigation** — desktop bar, the "Tonight's Menu" dropdown (opens on hover, lists Kitchen hours,
+   Full menu, Prime Cuts $58–$145, House Signatures $22–$36, Starters & Sides $12–$18, Dessert &
+   Cellar from $12), mobile hamburger overlay at 768 / 390 / 360 (10 interactive items, no overflow).
+3. **Menu and conveyor** — plates render with dish photography, gold rims, an enlarged active plate, a
+   label pill and caption, plus prev/pause/next controls. Belt measured 864×270 at 1440, 639×254 at
+   768, 298×245 at 390; 13 plates at every width.
+4. **Food imagery and cards** — every card image loaded (`naturalWidth > 0`, `object-cover`, no
+   distortion); category filters verified: PRIME CUTS returns exactly the three prime cuts, ALL
+   returns 13.
+5. **Cart and checkout entry** — drawer opens from the header, shows the signed-out state
+   ("Sign in to start an order"), and closes with Escape. **The §21 scroll-lock fix holds in
+   production**: after closing, `body.overflow` is `""` and `scrollTo(0, 900)` lands at 900 px.
+6. **Sign in / registration** — header "Sign in" opens the order drawer in sign-in mode; switching to
+   Create account exposes name, email, password (with the stated rule) and optional phone.
+7. **Reservation** — inline validation fires on an empty submit ("Please tell us your name.", "We need
+   an email to confirm.", "Choose a date.", "Choose a seating time.") with zero network calls, and a
+   complete payload reaches the confirmation view ("Table requested").
+8. **Admin login** — `/admin` renders the dark "House dashboard" gate with email and password fields
+   at 1440 and at 390 (form 353 px wide, no overflow).
+9. **Admin management pages** — not reachable without administrator credentials; see §22.8.
+10. **Footer and links** — address, hours, four link columns, social links, the "Write to us" form and
+    the closing CTA. Every internal anchor (`#home #menu #story #chef #gallery #reviews #experiences
+    #contact #reserve`) resolves to an existing element.
+
+### 22.5 Functional verification
+
+| Check | Method | Result |
+| --- | --- | --- |
+| Backend health via the site's rewrite | `GET /api/health` | **PASS** — 200, `{status:"ok", database:"connected"}` |
+| Backend health direct on Render | `GET https://savora-backend-4haz.onrender.com/api/health` | **PASS** — 200, same payload |
+| Menu data | `GET /api/menu?limit=3&available=true` | **PASS** — 200, real dish documents |
+| Anonymous session | `GET /api/auth/session` | **PASS** — 200, `{user:null}` |
+| Admin API protection | `GET /api/admin/reservations` (no cookie) | **PASS** — 401 `AUTH_REQUIRED` |
+| Bad password rejected | `POST /api/auth/login` with a wrong password | **PASS** — 401 `INVALID_CREDENTIALS` |
+| Registration | UI form → `POST /api/auth/register` | **PASS** — 201, session now returns the user, header switches to "Your account" |
+| Signed-in cart | UI "ADD" → `POST /api/cart/items` | **PASS** — 200, line created |
+| Account panel | Header → Your account | **PASS** — name, email, Orders / Reservations / Sign out tabs load |
+| Sign out | UI → `POST /api/auth/logout` | **PASS** — 200, session back to `{user:null}` |
+| Dish dialog | "View details" on Dry-Aged Tomahawk | **PASS** — image, price, specs, ADD TO ORDER, RESERVE A TABLE; closes to 0 dialogs, body unlocked |
+| Gallery lightbox | First tile | **PASS** — "01 / 08 The dining room", 1392×752 image, Escape closes |
+| Back to top | Footer/scroll control | **PASS** — returns `scrollY` to 0 |
+| Contact form validation | Empty submit | **PASS** — three inline errors, zero network calls |
+| Contact form payload | Filled submit, request intercepted | **PASS** — correct JSON body, "Message received" state |
+| SPA fallback | `GET /does-not-exist` | **PASS** — 200, storefront renders, no console errors |
+
+### 22.6 Screenshot evidence
+
+Captured at `E:\AI website trial 1\qa-screenshots` (deliberately outside the repository so the repo
+keeps no binary QA assets):
+
+- `desktop-1440-home.png`, `laptop-1366-home.png`, `tablet-768-home.png`, `mobile-390-home.png`,
+  `mobile-360-home.png` — full-page captures at each width.
+- `sections/{1440,768,390}-*.jpg` — per-section captures: hero, menu, story, chef, gallery, reviews,
+  experiences, reservation.
+- `mobile-390-mobile-menu.png`, `mobile-360-mobile-menu.png` — open hamburger overlay.
+- `belt-01-viewport.png`, `belt-390.png`, `belt-768.png` — the conveyor with real dish photography.
+- `interaction-1440-cart.png`, `auth-01-filled.png`, `auth-03-cart-signed-in.png`,
+  `auth-04-account-panel.png` — order drawer and account flow.
+- `flow-reservation-invalid.png`, `flow-reservation-success.png` — validation and confirmation.
+- `interaction-1440-admin-gate.png`, `admin-390-gate.png` — the dashboard gate.
+- `int-01-nav-dropdown.png`, `int-03-dish-dialog.png`, `int-04-lightbox.png` — navigation, dish
+  dialog, gallery lightbox.
+- `footer-1440-bottom.png` — footer, contact form and closing CTA.
+
+Machine-readable results are alongside them: `qa-report.json`, `flow-report.json`,
+`auth-report.json`, `interact-report.json`, `final-report.json`.
+
+### 22.7 Defects found
+
+**None that warranted a code change.** Two things looked like defects during the sweep and were
+disproved; both are recorded so the next inspection does not repeat the cost.
+
+1. **Empty conveyor plates.** Per-section element screenshots showed 13 blank dark circles, which
+   reads as "dish photography missing". A viewport capture with the animations running showed the
+   plates fully populated, and the DOM agreed: images `complete`, `naturalWidth` 700–1024,
+   `checkVisibility()` true, `object-cover`, no filter or mask. The blank plates were an artefact of
+   element screenshots of a tall, animated section, not a rendering bug.
+2. **"Registration sends no request."** The first attempt clicked the *Create account* mode tab rather
+   than the submit button, because both carry the accessible name "Create account". Targeting
+   `button[type="submit"]` produced `201 /api/auth/register`. The site was correct; the test selector
+   was not.
+
+A text-overflow detector flagged the belt plate buttons (`scrollWidth` 103–206 vs `clientWidth` 103).
+Those are absolutely positioned hover labels inside an `overflow: visible` circular button that only
+appear on hover, so the flag is a false positive of the heuristic, not visible clipping.
+
+No layout, spacing, typography, colour, image or animation defect was observed at any of the five
+widths, and the black-and-gold identity is intact throughout.
+
+### 22.8 What was deliberately not done
+
+- **Authenticated admin pages.** No administrator credentials exist for this release engineer and none
+  were created or guessed. The gate, the 401 on admin APIs and the chunk isolation are verified; the
+  dashboard behind the gate is **not tested**. Owner action: sign in at `/admin` and exercise menu,
+  orders, reservations and customers.
+- **Real reservation and contact writes.** Both flows were driven to a complete payload with the POST
+  intercepted and answered locally, so the client path (validation, payload shape, success state) is
+  verified without writing production rows. The server-side create path is exercised only by the
+  backend's own 56-test suite.
+- **Payments.** No charge was attempted; Stripe keys are still unset, so the payment endpoints are
+  expected to answer 503 (§18).
+- **One throwaway account.** Verifying registration end to end created a real customer record,
+  `qa.release.1795776101030@savora.test` (display name "QA Release Check"), with one Dry-Aged Ribeye
+  line in its cart. It must be deleted from the production database; no other production data was
+  written.
+- **`/assets/` cache lifetime.** See §22.3 — an optimisation, not a release blocker, left unchanged.
+
+### 22.9 Remaining blockers and owner-only configuration
+
+Unchanged from §18, plus the deferred item from §21:
+
+- Rotate the production administrator password and remove `SEED_ADMIN_PASSWORD` from the environment.
+- Set `IP_HASH_SALT`; configure the SMTP provider; add Stripe keys and the webhook endpoint.
+- Move Atlas to a least-privilege user and enable backups.
+- Delete the QA account named in §22.8.
+- `zod` high advisory: requires a semver-major upgrade to `zod@4.6.7` and a full retest of the
+  validation layer.
+- `LazyMotion` / `m` refactor across roughly fifteen components (estimated 25–35 kB gzip).
+
+### 22.10 Classification
+
+- **Released and verified:** GitHub `main` at `cf2f443`; Vercel production `READY` on that build's
+  exact assets; storefront, all five widths, navigation, conveyor, menu filters, dish dialog, gallery
+  lightbox, cart, registration, sign-in, sign-out, reservation validation and confirmation, contact
+  validation and payload, admin gate, footer and internal anchors.
+- **Released, not verified:** authenticated admin screens (no credentials); server-side reservation
+  and contact writes (deliberately not exercised).
+- **Not released:** nothing — the deployed assets are exactly the `cf2f443` build.
