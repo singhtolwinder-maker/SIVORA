@@ -827,8 +827,9 @@ keeps no binary QA assets):
   dialog, gallery lightbox.
 - `footer-1440-bottom.png` — footer, contact form and closing CTA.
 
-Machine-readable results are alongside them: `qa-report.json`, `flow-report.json`,
-`auth-report.json`, `interact-report.json`, `final-report.json`.
+Machine-readable results are alongside them: `qa-report.json`, `auth-report.json`,
+`interact-report.json`, `final-report.json`, `postdeploy.json`. The folder holds 49 full-page and
+interaction captures plus 27 section captures (28 MB) and is not committed.
 
 ### 22.7 Defects found
 
