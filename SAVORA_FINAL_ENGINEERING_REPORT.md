@@ -1056,7 +1056,7 @@ concrete gap visible in the current release.
 | --- | --- |
 | `main` | `304d802` (config change was `e79b87b`; the commits after it are documentation only) |
 | Live production deployment | `savora-restaurant-a4f4igjce` (built from `e79b87b`), alias `savora-restaurant-five.vercel.app` |
-| Skipped builds observed | 2 — `bpxjblttq` and `crzzc1s4q`, both `Canceled` after 2 s, both documentation-only |
+| Skipped builds observed | Every documentation-only commit pushed during this work — `bpxjblttq`, `crzzc1s4q`, `7mu6sff0m` and the commit after this one — each `Canceled` after 2 s |
 | Frontend build | 2032 modules, exit 0, `dist/assets/index-BYgQuto2.js` unchanged |
 | Lint | exit 0 |
 | Live render check | `h1` "A Taste Worth Remembering", 26 `article` nodes, 0 broken images, no horizontal overflow, 0 console errors, `index-BYgQuto2.js` |
