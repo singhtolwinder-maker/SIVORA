@@ -1064,3 +1064,160 @@ concrete gap visible in the current release.
 
 No application source changed in §23, so the deployed bundle is byte-identical to the `cf2f443`
 build that passed the §22 QA sweep. Backend and database untouched.
+
+---
+
+## 24. Image delivery, search metadata, keyboard navigation and monitoring
+
+This section closes the four gaps §23.4 ranked first: image weight, SEO files, a skip link and
+monitoring. It also records a defect that only appeared once the work was measured on the live site.
+
+### 24.1 What the audit found
+
+| # | Gap | Evidence | Severity |
+| --- | --- | --- | --- |
+| 1 | Every photograph was served as the original JPEG at its full size, in every slot | `interior-night.jpg` 97 kB for the hero, `dish-ribeye.jpg` 71 kB in a 380 px card; no `srcset` anywhere | High |
+| 2 | The conveyor belt requested each plate photo a second time as a CSS mask | 13 originals (1 268 kB) downloaded *in addition to* the AVIFs on the live site, §24.3 | High |
+| 3 | No canonical URL, no Open Graph image, no structured data | `index.html` had only `title`/`description`; a shared link rendered as bare text | Medium |
+| 4 | No `robots.txt`, no `sitemap.xml` | `/robots.txt` and `/sitemap.xml` returned the SPA shell | Medium |
+| 5 | Keyboard users tabbed through the whole navigation on every visit | `<main>` existed but there was no skip target or skip link | Medium |
+| 6 | A render error left a blank page and reported nothing | No error boundary in `main.jsx`; nothing reached the API or the logs | High |
+| 7 | No uptime check | Outages were discovered by customers | Medium |
+
+### 24.2 Responsive images, generated once and committed
+
+`scripts/optimize-images.mjs` reads the current `public/images/*.jpg`, renders WebP (quality 78,
+effort 5) and AVIF (quality 55, effort 4) at 480 px, 768 px and the source width (or just 480/700 for
+the two narrow sources), and writes `src/lib/imageManifest.json`. The script is deterministic: a
+re-run reproduced the committed manifest byte for byte.
+
+| Measure | Value |
+| --- | --- |
+| Sources | 17 JPEGs |
+| Derivatives committed | 98 files — 49 AVIF + 49 WebP |
+| Originals kept | 17 JPEGs, used only as the last `<source>` |
+| All originals | 1 768 kB |
+| All AVIF variants | 1 540 kB |
+| All WebP variants | 2 070 kB |
+| All 480 px AVIFs (17 sources) | 262 kB |
+| Hero 1392 px | 97 kB JPEG → 51 kB AVIF (−47 %) |
+| Dish at 480 px | 71 kB JPEG → 11 kB AVIF (−85 %) |
+| Dish at 768 px | 71 kB → 22 kB AVIF (−69 %) |
+
+`src/components/ui/ResponsiveImage.jsx` renders `<picture>` with AVIF, WebP and JPEG sources, a
+width `srcset` and a per-slot `sizes`, then the `<img>` carries the layout classes exactly as before,
+so no existing style changed. The `<picture>` itself is `display: contents`, which keeps the old
+`<img>` sizing rules working. A source missing from the manifest — an absolute URL typed into the
+admin editor, for example — falls through to a plain `<img>`, so admin-entered images keep working.
+Because the derivatives are committed, neither Vercel nor Render needs `sharp` at build time; the
+generator runs from a throwaway `npm i --no-save sharp` and leaves `package.json` and
+`package-lock.json` untouched (`npm run optimize:images`).
+
+Migrated call sites: `Hero`, `ChefSpecial`, `Features` (the zoom animation moved to a `motion.div`
+wrapper so the scale still applies), `Footer`, `Gallery` (tile and lightbox), `Menu` (card, featured
+panel, dialog — now also using the API's `imageAlt` as alt text), `shop/CartDrawer`,
+`admin/AdminApp` and the conveyor belt plate plus its dialog.
+
+### 24.3 The duplicate download that only production showed
+
+The first verification pass measured 2 175 kB of image traffic on a cold production load — the AVIFs
+(907 kB) plus 1 268 kB of original JPEGs. The JPEG requests had `initiatorType: css` and started
+before the first AVIF, which ruled out the `<img>` fallback.
+
+The cause was in `src/components/ui/sushi-conveyor-menu.tsx`: the shade that dims a plate on the back
+lane was masked with the plate photo itself —
+
+```js
+const mask = `url("${item.image}") 0 0 / 100% 100% no-repeat`;
+<span style={{ opacity: 0, WebkitMask: mask, mask }} />
+```
+
+A CSS image URL is a download of its own, so the belt fetched every original JPEG again. The shade is
+now a circular black overlay (`rounded-[50%]`) on the plate, which dims the same area at the same
+depth-based opacity (measured 0 → 0.15 across the lane) with no request.
+
+The `<img>` fallback also changed: it points at an inline transparent SVG and JPEG became a third
+`<source>`, so the element's required `src` can never cost a full-size download. Verified on a cold
+production load after the fix: 33 image requests, **907 kB total, 0 bytes of JPEG**, 183 kB of JS,
+1 107 kB for the whole page.
+
+### 24.4 Search metadata
+
+`index.html` gained an absolute canonical (`https://savora-restaurant-five.vercel.app/`), `og:url`,
+`og:site_name`, `og:type` `restaurant.restaurant`, an absolute `og:image` with type/dimensions/alt, a
+Twitter summary card and a `Restaurant` JSON-LD block: address (1428 Hudson Street, New York, NY
+10013), telephone, geo coordinates, four `openingHoursSpecification` periods, `hasMenu` and
+`acceptsReservations`. The block was parsed back out of the live HTML — `Restaurant SAVORA
++1-212-555-0184 4 blocks` — and the live console shows no CSP violation for it.
+
+`public/robots.txt` allows the storefront, disallows `/admin` and `/api/`, and points at the sitemap;
+`public/sitemap.xml` lists the single public URL with a `lastmod`. Both are served from the site root
+with `text/plain` and `application/xml` respectively.
+
+### 24.5 Keyboard navigation
+
+`<a href="#main" class="skip-link">` is the first focusable element in the storefront; `<main
+id="main" tabIndex={-1}>` makes the target focusable and suppresses the page-wide focus ring that
+would otherwise appear around the viewport. The link is fixed above the viewport and slides in on
+`:focus-visible`. In the preview panel the 180 ms transition does not run because the panel pauses
+animations when `document.hidden` is true (the same artefact recorded in §20); with the transition
+disabled for measurement the link sat at `top: 12px`, fully visible, while `:focus-visible` matched.
+
+### 24.6 Error reporting and uptime monitoring
+
+- **`src/components/ui/ErrorBoundary.jsx`** wraps the app in `main.jsx`. It shows a branded recovery
+  screen ("This page did not finish loading", Reload, Back to the restaurant) instead of a blank page,
+  and posts one compact report per failure (message, top of stack, component stack, route) to
+  `POST /api/client-errors`. A `reported` flag prevents duplicates from StrictMode's double invoke.
+- **`POST /api/client-errors`** (`backend/src/routes/telemetry.routes.js`, controller, zod validator)
+  is behind the public-form rate limiter, validates the payload and writes one structured
+  `[client-error]` line to the API log next to the request id. Nothing is stored in the database: no
+  new collection, no new write path, no data-retention question.
+- **`.github/workflows/uptime.yml`** runs every 15 minutes (and on demand): the storefront must serve
+  the app shell, `/api/health` through the Vercel rewrite and directly on Render must report a
+  connected database, and a missing `/assets/*.js` must return 404 rather than the HTML shell. A
+  failure turns the run red, which is the notification — there is no third-party monitor.
+
+The boundary was exercised for real: a temporary harness page rendered a component that throws,
+showing the recovery screen and issuing exactly one `POST /api/client-errors` (the request 502'd only
+because no local API was running). Both harness files were deleted before committing.
+
+### 24.7 Verification
+
+| Check | Result |
+| --- | --- |
+| `npm run lint` | PASS — exit 0 |
+| `npm run build` | PASS — 2035 modules, `dist/assets/index-CCXmv-si.js` |
+| `dist` contents | PASS — `robots.txt`, `sitemap.xml`, 115 image files |
+| Backend `npm test` | PASS — 58 tests (56 before, +2 for the new endpoint), 0 failures |
+| Manifest reproducibility | PASS — re-run produced an identical `imageManifest.json` |
+| Live `/` | PASS — 200 HTML, canonical, OG and JSON-LD present |
+| Live `/robots.txt`, `/sitemap.xml` | PASS — 200, correct content types |
+| Live image headers | PASS — `image/avif`, `max-age=86400, stale-while-revalidate=604800` |
+| Live missing asset | PASS — 404, not the SPA shell |
+| Live `/admin`, `/menu`, `/does-not-exist` | PASS — 200 HTML |
+| Cold production load | PASS — 52 images all AVIF, 0 broken, 907 kB images, 0 kB JPEG, no overflow, 0 console messages |
+| Live menu data | PASS — 26 cards from `/api/menu`, 13 belt plates |
+| Skip link | PASS (CSS verified with the transition disabled; the panel cannot animate while hidden) |
+
+### 24.8 Deployment
+
+| Item | Value |
+| --- | --- |
+| Commits | `6e4cb63` images · `40d2a17` SEO and skip link · `612f898` monitoring · `57c3960` belt fix |
+| Vercel | `savora-restaurant-medfkmaex` Ready (production), alias `savora-restaurant-five.vercel.app` |
+| Render | **Not deployed** — `/api/client-errors` still 404 and `uptimeSeconds` still climbing, so the service never restarted for these commits |
+
+### 24.9 Remaining limitations
+
+- **BLOCKED — backend deploy.** The one new endpoint exists in `main` but not in production. The
+  Render service did not restart after two pushes and ~25 minutes of polling, so its auto-deploy is
+  off; starting a deploy needs the Render dashboard, which is outside my access. Until it deploys the
+  error boundary's report goes nowhere (the boundary itself still works — a failed report is swallowed
+  by design) and the uptime workflow's API assertions still exercise the older build.
+- **NOT TESTED — uptime workflow runs.** A scheduled workflow cannot be triggered without a token, so
+  its first real run is the next 15-minute tick; it can also be started by hand from the Actions tab.
+- **NOT TESTED — admin dashboard.** Still no admin credentials (§22.8). The admin image change was
+  compiled and rendered through the storefront only.
+- **Deferred** — the `zod` 3 → 4 upgrade (§23.4 item 6), the `LazyMotion` migration (item 4) and
+  self-hosted fonts (item 5) remain open.
