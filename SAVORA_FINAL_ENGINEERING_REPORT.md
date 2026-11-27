@@ -1050,3 +1050,17 @@ concrete gap visible in the current release.
 - **Not verified:** rollback promotion (would change production), cache behaviour in a real returning
   browser across two deployments (verified by headers and by 404 semantics instead), the ranked
   recommendations (not implemented).
+### 23.6 Final state of this configuration release
+
+| Item | Value |
+| --- | --- |
+| `main` | `304d802` (config change was `e79b87b`; the commits after it are documentation only) |
+| Live production deployment | `savora-restaurant-a4f4igjce` (built from `e79b87b`), alias `savora-restaurant-five.vercel.app` |
+| Skipped builds observed | 2 — `bpxjblttq` and `crzzc1s4q`, both `Canceled` after 2 s, both documentation-only |
+| Frontend build | 2032 modules, exit 0, `dist/assets/index-BYgQuto2.js` unchanged |
+| Lint | exit 0 |
+| Live render check | `h1` "A Taste Worth Remembering", 26 `article` nodes, 0 broken images, no horizontal overflow, 0 console errors, `index-BYgQuto2.js` |
+| Live HTTP | `/` 200 · `/menu` 200 · `/admin` 200 · `/assets/index-BYgQuto2.js` 200 · `/assets/<missing>.js` 404 · `/api/health` 200 |
+
+No application source changed in §23, so the deployed bundle is byte-identical to the `cf2f443`
+build that passed the §22 QA sweep. Backend and database untouched.
