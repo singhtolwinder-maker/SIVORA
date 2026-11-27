@@ -892,3 +892,160 @@ Unchanged from §18, plus the deferred item from §21:
 - **Released, not verified:** authenticated admin screens (no credentials); server-side reservation
   and contact writes (deliberately not exercised).
 - **Not released:** nothing — the deployed assets are exactly the `cf2f443` build.
+## 23. Deployment optimization and hardening — 27 November 2026
+
+Scope: the Vercel delivery configuration only. No application source, design, database or customer
+data was touched in this section; every change below lives in `vercel.json` except where stated.
+
+### 23.1 Deployment-ID pinning audit
+
+What was inspected, and what it actually controls:
+
+| Surface | Content | Pins a deployment? |
+| --- | --- | --- |
+| `vercel.json` | headers, rewrites, `ignoreCommand` | No deployment, commit or alias reference |
+| `.vercel/project.json` | `projectId`, `orgId`, `projectName` | No — project linkage used by the CLI; without it `vercel` cannot target the project |
+| Git integration | repo `singhtolwinder-maker/SIVORA`, production branch `main` | No — it maps a branch to an environment |
+| Aliases (`vercel alias ls`) | `savora-restaurant-five`, `-singhtolwinder-maker`, `-git-main-…` all point at the newest production deployment | No — Vercel reassigns them on each production build, verified across four promotions today |
+| Domains (`vercel domains ls`) | 0 custom domains | n/a |
+| Application code | `grep -rn "dpl_"` over `src/`, `backend/src/`, configs | No matches |
+| Report | two deployment IDs in §22.1 | Historical evidence only; markdown cannot influence routing |
+
+**Conclusion: no functional deployment-ID pinning exists, so nothing needed removing.** The two IDs in
+§22.1 are release history (they document which builds served production at what time); deleting them
+would remove traceability and change nothing operationally. They were deliberately kept, and an
+earlier revision that named a *currently live* deployment ID was already replaced with a
+content-based description, because that ID moves on every push.
+
+Rollback capability is intact: the deployment history is preserved (the project lists every
+production build of the last weeks) and any of them can be promoted back. Rollback itself was **not
+exercised**, because doing so would change what production serves.
+
+Production still serves the intended release: the served HTML references `index-BYgQuto2.js`, the
+asset name emitted by the `cf2f443` build; every commit since is configuration or documentation.
+
+### 23.2 Caching, and the defect the change exposed
+
+Intended policy, now in `vercel.json`:
+
+| Path | Header | Why |
+| --- | --- | --- |
+| `/(.*)` | security headers (unchanged) | Applies to every response, including assets |
+| `/assets/(.*)` | `public, max-age=31536000, immutable` | Vite emits content-hashed filenames |
+| `/images/(.*)` | `public, max-age=86400, stale-while-revalidate=604800` | Filenames are **not** hashed, so immutable would be wrong |
+| `/favicon.svg`, `/icons.svg` | `public, max-age=86400, stale-while-revalidate=604800` | Same reasoning |
+| `/api/(.*)` | `private, no-store` | Defence in depth for cart, orders, sessions, admin |
+| HTML entry | `public, max-age=0, must-revalidate` (Vercel default) | Revalidates so new asset hashes are picked up |
+
+Verified against production with `curl -I` after the deployment:
+
+```
+/                         200  text/html                       Cache-Control: public, max-age=0, must-revalidate
+/assets/index-BYgQuto2.js 200  application/javascript          Cache-Control: public, max-age=31536000, immutable
+                                                                + CSP, X-Frame-Options: DENY preserved
+/images/interior-night.jpg 200 image/jpeg                      Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/favicon.svg              200  image/svg+xml                   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/api/health               200                                  Cache-Control: private, no-store
+/api/menu                 200                                  Cache-Control: private, no-store
+/api/auth/session         200                                  Cache-Control: private, no-store
+```
+
+**Defect found while testing the change.** With the SPA catch-all rewrite in place, a request for a
+missing `/assets/*.js` was answered with `index.html` and — once the immutable rule existed — that
+HTML was served with `Cache-Control: public, max-age=31536000, immutable`. A stale tab holding an old
+`index.html` would fetch an old hashed script, receive HTML, cache it for a year under a script URL,
+and fail with a MIME error.
+
+Two fixes were attempted; the first did **not** work and is recorded so it is not retried:
+
+1. Rewrite `/assets/(.*)` to a deliberately missing path (`/__missing_static_asset__`). Vercel
+   re-evaluates the rewritten internal path against the remaining rewrites, so it landed on `/index.html`
+   again — the response was still `200 text/html`. Rejected.
+2. Exclude file-extension paths from the SPA fallback, so missing static files reach Vercel's own 404:
+   `"source": "/((?!.*\\.(?:js|mjs|css|map|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|otf|json|txt|xml)$).*)"`.
+   This is the shipped fix.
+
+Verified after the final deployment:
+
+| Request | Before | After |
+| --- | --- | --- |
+| `/` | 200 HTML | 200 HTML, revalidate |
+| `/menu`, `/admin` (deep links) | 200 HTML | 200 HTML — SPA fallback still works |
+| `/assets/index-BYgQuto2.js` | 200 JS | 200 JS, immutable + CSP |
+| `/assets/index-AAAAAAAA.js` (nonexistent) | **200 text/html** | **404 text/plain** |
+| `/images/nope.jpg` | 200 text/html | 404 text/plain |
+| `/api/health`, `/api/menu`, `/api/auth/session` | 200 | 200, `private, no-store` |
+
+Residual, accepted: the 404 for a missing asset inherits the `/assets` immutable header, so a client
+caches that 404 for a year. Because asset names are content hashes, the only way a cached 404 could
+matter is a future deployment reintroducing byte-identical content under the same name — acceptable
+against the alternative of shipping HTML at script URLs. Page rendering after the change was
+confirmed in the browser: 0 console errors, all requests 200, hero and 26 dish nodes rendered, 0
+broken images.
+
+### 23.3 Skipping documentation-only builds
+
+`vercel.json` now carries:
+
+```
+"ignoreCommand": "if git diff --quiet HEAD^ HEAD -- . ':(exclude)*.md' ':(exclude)*.mdx' ':(exclude)docs/**' 2>/dev/null; then exit 0; else exit 1; fi"
+```
+
+Vercel's contract for `ignoreCommand`: exit `0` skips the build, non-zero builds. The command diffs
+the pushed commit against its parent over every path except Markdown and `docs/**`; if nothing outside
+documentation changed, it exits 0 and the build is skipped. If the diff itself fails (no parent
+commit, shallow clone), the command exits non-zero and the build runs — failures fall open, never
+silently closing the pipeline.
+
+Exit codes measured locally against real commits:
+
+| Commit content | Exit | Meaning |
+| --- | --- | --- |
+| `SAVORA_FINAL_ENGINEERING_REPORT.md` only | 0 | skip |
+| `src/App.jsx` comment | 1 | build |
+| `backend/package.json` comment | 1 | build (backend changes are never ignored) |
+| `vercel.json` change | 1 | build |
+
+Deliberately **not** excluded: `backend/**`, `package.json`, `package-lock.json`, `.env*`,
+`vercel.json`, `index.html`, `src/**`, `public/**`. Only Markdown and `docs/**` are treated as
+documentation, so configuration, dependency, environment and build changes always build.
+
+Production test: the commit that added this section changed only
+`SAVORA_FINAL_ENGINEERING_REPORT.md`. Vercel produced no new production deployment for it — the
+newest production build still corresponds to the preceding `vercel.json` commit — while the
+preceding configuration commit did build. The mechanism therefore works end to end, and normal
+production deployments are untouched for any non-documentation change.
+
+### 23.4 Further improvements, ranked
+
+Ordered by impact against risk and effort. None of these were implemented in this release; they are
+recommendations for the owner to schedule.
+
+| # | Improvement | Area | Impact | Risk | Effort |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Serve the 17 JPEGs as responsive WebP/AVIF with `srcset` and width/height; add `fetchpriority="high"` to the hero image | Performance | High — most of the page weight on mobile | Low | Medium |
+| 2 | Add `public/robots.txt` and `public/sitemap.xml`; add `Restaurant` JSON-LD and a canonical URL to `index.html` | SEO | High for a restaurant site (rich results, indexing) | Low | Low |
+| 3 | Error and uptime monitoring (React error boundary reporting + a 1-minute external check on `/api/health`) | Reliability | High — currently failures are invisible until a customer reports them | Low | Low |
+| 4 | Replace `motion` with `LazyMotion` + `m` across ~15 components (≈25–35 kB gzip of the 55 kB motion chunk) | Performance | Medium-high | Medium — animation regressions need re-inspection | High |
+| 5 | Self-host and subset Playfair Display + Inter instead of two Google origins | Performance / privacy | Medium — removes 2 DNS+TLS handshakes | Low | Medium |
+| 6 | Upgrade `zod` 3 → 4.6.7 for the open high advisory | Security | Medium | High — validation layer needs a full retest | Medium |
+| 7 | Run an automated axe-core pass at 390 and 1440, add a skip-to-content link, and confirm focus-visible styles | Accessibility | Medium | Low | Low |
+| 8 | Add `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Resource-Policy: same-origin` alongside the existing CSP | Security | Low-medium | Low | Low |
+| 9 | Post-deploy smoke check in CI (health + expected asset hashes + 404 for a bogus asset) | Deployment automation | Medium — catches exactly the class of bug found in §23.2 | Low | Medium |
+| 10 | Redis/edge cache or CDN `s-maxage` for the public menu endpoint, with tag-based purge on admin edits | Performance | Low-medium (currently revalidated every load) | Medium — stale menu risk | Medium |
+| 11 | Admin dashboard review: pagination/search for orders and reservations, audit log of admin actions | Admin experience | Medium | Medium | Unknown until the dashboard is inspected — it has never been seen by QA (§22.8) |
+| 12 | Cached 404s for asset paths: serve a dedicated 404 with `Cache-Control: no-store` if Vercel later exposes per-status headers | Deployment | Low | Low | Low |
+
+The first three are the ones worth doing next: they are cheap, reversible and each addresses a
+concrete gap visible in the current release.
+
+### 23.5 Classification
+
+- **Changed and verified in production:** `/assets` immutable caching, `/images` and icon caching,
+  `private, no-store` on `/api/*`, 404 instead of the SPA shell for missing static files, SPA deep
+  links preserved, documentation-only builds skipped.
+- **Investigated, no change required:** deployment-ID pinning (none exists), rollback history
+  (intact), production release identity (matches `cf2f443` assets).
+- **Not verified:** rollback promotion (would change production), cache behaviour in a real returning
+  browser across two deployments (verified by headers and by 404 semantics instead), the ranked
+  recommendations (not implemented).
