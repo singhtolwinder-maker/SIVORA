@@ -1,0 +1,71 @@
+name: Uptime
+
+# Production health checks. A failure marks the run red, which is what notifies
+# the repository owner: there is no third-party monitor in this project, and a
+# silent outage is exactly how the last one went unnoticed until a customer
+# complained.
+#
+# The checks mirror the two failure modes seen in this project: the API losing
+# its database connection, and the static host answering a page that is not the
+# application (a stale or broken deployment).
+on:
+  schedule:
+    # GitHub's shortest interval. Delays of a few minutes are normal on cron.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  production:
+    name: Production health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: https://savora-restaurant-five.vercel.app
+      API: https://savora-backend-4haz.onrender.com
+    steps:
+      - name: Storefront responds and serves the app shell
+        shell: bash
+        run: |
+          set -o pipefail
+          body="$(curl -fsS --retry 2 --retry-delay 3 --max-time 20 "$SITE/")"
+          if ! grep -q 'id="root"' <<<"$body"; then
+            echo "::error::The storefront answered 200 but did not serve the application shell."
+            exit 1
+          fi
+          echo "Storefront OK ($(wc -c <<<"$body") bytes)."
+
+      - name: API health through the site rewrite
+        shell: bash
+        run: |
+          set -o pipefail
+          body="$(curl -fsS --retry 2 --retry-delay 3 --max-time 20 "$SITE/api/health")"
+          if ! grep -q '"database":"connected"' <<<"$body"; then
+            echo "::error::API reached through the Vercel rewrite is not reporting a connected database: $body"
+            exit 1
+          fi
+          echo "Rewrite OK: $body"
+
+      - name: API health directly on Render
+        shell: bash
+        run: |
+          set -o pipefail
+          body="$(curl -fsS --retry 2 --retry-delay 3 --max-time 30 "$API/api/health")"
+          if ! grep -q '"status":"ok"' <<<"$body"; then
+            echo "::error::Render API is not healthy: $body"
+            exit 1
+          fi
+          echo "Render OK: $body"
+
+      - name: Missing static asset is a 404, not the HTML shell
+        shell: bash
+        run: |
+          code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$SITE/assets/uptime-probe-does-not-exist.js")"
+          if [ "$code" != "404" ]; then
+            echo "::error::A missing asset returned $code instead of 404; stale-browser caching would break."
+            exit 1
+          fi
+          echo "Missing-asset contract OK (404)."

@@ -194,6 +194,23 @@ describe("infrastructure", () => {
     assert.equal(response.status, 400);
     assert.equal(response.body.error.code, "BAD_REQUEST");
   });
+
+  it("accepts an anonymous browser error report", async () => {
+    const response = await api.post("/api/client-errors").send({
+      message: "Cannot read properties of undefined (reading 'length')",
+      stack: "TypeError: Cannot read properties of undefined\n    at Menu",
+      route: "/#menu",
+      source: "storefront",
+    });
+    assert.equal(response.status, 202);
+    assert.equal(response.body.success, true);
+  });
+
+  it("rejects an empty browser error report", async () => {
+    const response = await api.post("/api/client-errors").send({ message: "" });
+    assert.equal(response.status, 422);
+    assert.equal(response.body.error.code, "VALIDATION_ERROR");
+  });
 });
 
 describe("authentication", () => {

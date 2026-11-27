@@ -117,6 +117,10 @@ export const api = {
 
   sendContactMessage: (payload) => apiRequest("/contact", { method: "POST", body: payload }),
 
+  /** Diagnostics only: the API logs these; nothing is stored. */
+  reportClientError: (payload) =>
+    apiRequest("/client-errors", { method: "POST", body: payload, retry: false }),
+
   login: (credentials) => apiRequest("/auth/login", { method: "POST", body: credentials }),
   register: (details) => apiRequest("/auth/register", { method: "POST", body: details }),
   logout: () => apiRequest("/auth/logout", { method: "POST" }),

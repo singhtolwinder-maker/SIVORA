@@ -9,6 +9,7 @@ import reservationRoutes from "./reservation.routes.js";
 import contactRoutes from "./contact.routes.js";
 import paymentRoutes from "./payment.routes.js";
 import adminRoutes from "./admin.routes.js";
+import telemetryRoutes from "./telemetry.routes.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 
 const router = Router();
@@ -45,5 +46,6 @@ router.use("/reservations", reservationRoutes);
 router.use("/contact", contactRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/admin", adminRoutes);
+router.use("/client-errors", telemetryRoutes);
 
 export default router;
