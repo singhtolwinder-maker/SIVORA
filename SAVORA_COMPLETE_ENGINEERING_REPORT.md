@@ -419,7 +419,55 @@ structural, measured facts:
 
 ---
 
-## 13. Remaining technical debt
+## 13. Responsive and design QC
+
+Screenshots were captured from the live production site in a real browser, not built as
+mock-ups, and saved in `docs/screenshots/`. Each capture also recorded status, layout
+width, console errors, failed requests and broken images at the moment of the shot.
+
+| File | Viewport | Page | Status | Page height | Horizontal overflow | Console errors | Failed requests | Broken images |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `docs/screenshots/desktop-1440-home.png` | 1440×900 | `/` (full page) | 200 | 12 740 px | no | 0 | 0 | 0 |
+| `docs/screenshots/laptop-1024-home.png` | 1024×768 | `/` | 200 | 11 847 px | no | 0 | 0 | 0 |
+| `docs/screenshots/tablet-768-home.png` | 768×1024 | `/` | 200 | 17 778 px | no | 0 | 0 | 0 |
+| `docs/screenshots/mobile-360-home.png` | 360×800 | `/` | 200 | 20 887 px | no | 0 | 0 | 0 |
+| `docs/screenshots/desktop-1440-admin.png` | 1440×900 | `/admin` | 200 | 900 px | no | 0 | 0 | 0 |
+| `docs/screenshots/mobile-360-admin.png` | 360×800 | `/admin` | 200 | 800 px | no | 0 | 0 | 0 |
+
+`scrollWidth` equalled `innerWidth` at all four widths, so nothing pushes the document wider
+than the viewport; 39 images loaded on the home page with none broken, and the deployed
+bundle contains no `localhost` reference.
+
+![Home page at 1440](./docs/screenshots/desktop-1440-home.png)
+![Home page at 360](./docs/screenshots/mobile-360-home.png)
+
+### Visual changes made in this pass
+
+The palette, type scale, spacing tokens and API contracts were not changed. Two layout
+defects were found by looking at the rendered page and fixed:
+
+1. **Dish card (`src/components/Menu.jsx`).** The card had been assembled from two
+disconnected pieces: image, title and price sat in one bordered box while the action bar
+floated in a second box below it, separated by a gap and a duplicated “Tap the plate for
+details” hint. It is now a single `overflow-hidden` surface with the action bar as an inset
+`border-t` footer holding one “View details” button and the “Add” button.
+2. **`src/components/Features.jsx`.** A decorative `border-gold/25` frame with no content
+was drawn at the bottom-right of the feature panel and read as a stray empty box. It was
+removed; the top-left corner accent was kept.
+
+An early screenshot of the menu showed faint duplicated text fragments over some cards. A
+settled `prefers-reduced-motion` render was measured rather than judged by eye: across all
+13 cards the description’s `scrollHeight` equalled its `clientHeight` (no clipping), every
+description bottom sat inside its media block, and the settled state had **0 running
+animations** and **0 console errors**. The fragments were mid-animation paint from a
+programmatic scroll, not a layout defect.
+
+Not checked: contrast ratios and Lighthouse/axe scores were not audited, so no such claim
+is made.
+
+---
+
+## 14. Remaining technical debt
 
 1. **Transactional email** — `SMTP_URL` must join the validated env schema and
    `utils/mailer.js` must use it; today mail is console-only while the API implies delivery.
@@ -440,7 +488,7 @@ structural, measured facts:
 
 ---
 
-## 14. Final production readiness checklist
+## 15. Final production readiness checklist
 
 | # | Item | Status |
 | --- | --- | --- |
@@ -450,7 +498,7 @@ structural, measured facts:
 | 4 | Server-side authorisation for admin and ownership | VERIFIED |
 | 5 | No secret in code, bundle or report | VERIFIED |
 | 6 | Frontend build and backend production start succeed | VERIFIED (lint gap documented) |
-| 7 | Black-and-gold design intact; visual changes listed | VERIFIED — new surfaces reuse existing tokens; no palette or type change |
+| 7 | Black-and-gold design intact; visual changes listed | VERIFIED — new surfaces reuse existing tokens; no palette or type change. Two layout fixes and the four-width screenshot evidence are in §13 |
 | 8 | No production data modified without approval | VERIFIED — additive seed only, on an empty database |
 | 9 | All 14 deliverables exist | DONE — this report, `docs/API.md`, `README.md`, `DEPLOYMENT.md`, both `.env.example` files |
 | 10 | Production admin password rotated by owner | **OPEN — owner action** |
@@ -475,6 +523,9 @@ Frontend `200`; API health `200` with `database: connected`; `/api/menu` through
 Vercel origin returning 13 items across 4 categories; production admin login `200` with
 `role: admin`; `/api/admin/stats` `200`; logout `200` with the session revoked; CORS
 preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a foreign origin.
+The deployed frontend was also rendered in a real browser at 1440, 1024, 768 and 360 px
+with zero console errors, zero failed requests, no broken images and no horizontal
+overflow; the captures and measurements are in §13.
 
 ## Not verified, and why
 
@@ -515,6 +566,8 @@ preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a forei
 | `src/components/shop/CartDrawer.jsx`, `AccountPanel.jsx` | new; cart, checkout, account (H-6) |
 | `src/admin/AdminApp.jsx` | new; `/admin` dashboard (H-6) |
 | `src/components/Menu.jsx`, `Navbar.jsx`, `Reservation.jsx`, `App.jsx` | real dish ids, cart/account controls, API-backed reservation, providers (H-6) |
+| `src/components/Menu.jsx` | dish card unified into one surface with an inset action footer (design QC, §13) |
+| `src/components/Features.jsx` | removed a stray empty decorative frame (design QC, §13) |
 | `src/components/ui/Preloader.jsx` | click-through fix (H-3) |
 | `src/lib/api.js` | session probe and shop/admin methods |
 | `vite.config.js` | IPv4 bind, `strictPort`, proxy error logging (H-4) |
@@ -524,6 +577,8 @@ preflight `204` from the Vercel origin and `403 ORIGIN_NOT_ALLOWED` from a forei
 | `README.md` | replaced Vite boilerplate with real project documentation |
 | `DEPLOYMENT.md` | topology, env table, nginx, seeding, admin reset, cookie rationale, troubleshooting |
 | `docs/API.md` | new; complete endpoint reference |
+| `docs/screenshots/*.png` | six production captures at 360/768/1024/1440 (§13) |
+| `SAVORA_AUDIT_INITIAL.md` | new; initial audit — problems, risks, gaps, working areas, repair order |
 | `.env.example`, `SAVORA_COMPLETE_ENGINEERING_REPORT.md` | frontend env template and this report |
 
 ---
