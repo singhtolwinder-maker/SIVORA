@@ -15,6 +15,19 @@ function buildSrcSet(variants, format) {
   return variants.map((variant) => `${variant[format]} ${variant.width}w`).join(", ");
 }
 
+/**
+ * A 1×1 transparent SVG, inlined so it costs no request.
+ *
+ * `<img>` must carry a `src`, and a browser starts fetching it as soon as the
+ * element exists — before the `<source>` list is read. Pointing it at the
+ * full-size JPEG meant the menu downloaded 13 originals (1.27 MB) *and* the
+ * AVIFs it actually displayed. The placeholder keeps that fallback free, and
+ * the JPEG is offered as a third `<source>` so a browser without AVIF or WebP
+ * still gets the photograph instead of an empty box.
+ */
+const PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3C/svg%3E";
+
 export function ResponsiveImage({
   src,
   alt = "",
@@ -49,8 +62,9 @@ export function ResponsiveImage({
     <picture className="contents">
       <source type="image/avif" srcSet={buildSrcSet(entry.variants, "avif")} sizes={sizes} />
       <source type="image/webp" srcSet={buildSrcSet(entry.variants, "webp")} sizes={sizes} />
+      <source type="image/jpeg" srcSet={`${src} ${entry.width}w`} sizes={sizes} />
       <img
-        src={src}
+        src={PLACEHOLDER}
         alt={alt}
         className={className}
         loading={loading}
