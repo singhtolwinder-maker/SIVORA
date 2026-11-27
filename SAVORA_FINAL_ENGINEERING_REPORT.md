@@ -658,19 +658,25 @@ produced it.
 | Remote after push | `git fetch` + `git rev-parse origin/main` returned the same SHA |
 | Vercel project | `savora-restaurant` (`prj_MdGBrQEzh5sAhhqbwYilBQXRsAmZ`), owner `singhtolwinder-maker` |
 | Framework / production branch | Vite / `main` |
-| Deployment | `dpl_47RWwpjarwaih3RMRrvghCAhpSzf`, target `production` |
-| Status | `READY` |
-| Created | 2026-11-27 10:29:44 UTC (15:29:44 IST) |
-| Build → ready | 7.7 s |
-| Deployment URL | `https://savora-restaurant-9vd2a1e8j-singhtolwinder-maker.vercel.app` |
-| Production alias | `https://savora-restaurant-five.vercel.app` |
+| First deployment (CLI, `vercel --prod`) | `dpl_47RWwpjarwaih3RMRrvghCAhpSzf`, target `production`, `READY` |
+| First deployment created | 2026-11-27 10:29:44 UTC (15:29:44 IST), build → ready 7.7 s |
+| Deployment now live | `dpl_4b4zZCZ8tjMxdg1wikm2ii4PTHpr`, target `production`, `READY` |
+| Live deployment created | 2026-11-27 10:47:16 UTC (16:17:16 IST), triggered by the Git integration on push |
+| Deployment URL | `https://savora-restaurant-935w05fhv-singhtolwinder-maker.vercel.app` |
+| Production alias | `https://savora-restaurant-five.vercel.app` (plus `-singhtolwinder-maker` and `-git-main-singhtolwinder-maker`) |
 
-The deployment was produced by `vercel --prod` from the working tree of `cf2f443`, not by Vercel's
-Git integration, so Vercel's own metadata carries no commit SHA. Identity was therefore established
-by content instead: the served HTML references `index-BYgQuto2.js`, `react-Ibbx6Gbr.js`,
-`motion-BFLdOOnU.js`, `rolldown-runtime-WkwZ5CU-.js` and `AdminApp-BFYr5MgE.js` — byte-for-byte the
-asset names emitted by `npm run build` on `cf2f443` (§21.3, §22.5). A different commit or a stale
-build would have produced different hashes.
+The first deployment was produced by `vercel --prod` from the working tree of `cf2f443`, not by
+Vercel's Git integration, so its metadata carries no commit SHA. Identity was established by content
+instead: the served HTML references `index-BYgQuto2.js`, `react-Ibbx6Gbr.js`, `motion-BFLdOOnU.js`,
+`rolldown-runtime-WkwZ5CU-.js` and `AdminApp-BFYr5MgE.js` — byte-for-byte the asset names emitted by
+`npm run build` on `cf2f443` (§21.3). A different commit or a stale build would have produced
+different hashes.
+
+Pushing the report commit `ea9b50a` then made Vercel's Git integration build and promote a second
+deployment automatically. `ea9b50a` changes only `SAVORA_FINAL_ENGINEERING_REPORT.md` and
+`.gitignore`, so its asset hashes are identical; the alias was re-fetched after the switch and still
+returns `index-BYgQuto2.js`. Production therefore matches `HEAD` (`ea9b50a`) and the deployed
+application code is exactly the `cf2f443` build.
 
 ### 22.2 Pre-release gate
 
@@ -718,6 +724,24 @@ served with `max-age=0, must-revalidate` rather than a long `immutable` lifetime
 visitor revalidates each asset (cheap `304`s) instead of skipping the request. The bandwidth claim in
 §21.3 — 181.0 kB → 58.1 kB gzip per deploy — still holds; only the round trips differ. Left
 unchanged deliberately, as it is not release-blocking.
+
+### 22.3b Re-verification after the second deployment
+
+Because the alias moved to a new deployment after the first sweep, the checks were repeated against
+the promoted one rather than assumed to carry over.
+
+| Check | 1440×900 | 390×844 |
+| --- | --- | --- |
+| Horizontal overflow | none | none |
+| Dish cards | 13 | 13 |
+| Broken images | 0 | 0 |
+| Console / page errors | 0 | 0 |
+| Failed requests (`status >= 400`) | 0 | 0 |
+| `GET /api/menu`, `GET /api/auth/session` | 200, 200 | 200, 200 |
+| Cart drawer opens, closes to 0 dialogs | yes, `overflow=""` | yes, `overflow=""` |
+| `scrollTo(0, 800)` after closing | 800 px | 800 px |
+| `/admin` gate (1440) | "House dashboard", 2 inputs, 0 console errors | — |
+| `GET /api/health` | 200, `{status:"ok", database:"connected"}` | — |
 
 ### 22.4 Live inspection
 
