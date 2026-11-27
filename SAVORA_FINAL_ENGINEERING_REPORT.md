@@ -1011,10 +1011,11 @@ Deliberately **not** excluded: `backend/**`, `package.json`, `package-lock.json`
 documentation, so configuration, dependency, environment and build changes always build.
 
 Production test: the commit that added this section changed only
-`SAVORA_FINAL_ENGINEERING_REPORT.md`. Vercel produced no new production deployment for it — the
-newest production build still corresponds to the preceding `vercel.json` commit — while the
-preceding configuration commit did build. The mechanism therefore works end to end, and normal
-production deployments are untouched for any non-documentation change.
+`SAVORA_FINAL_ENGINEERING_REPORT.md`. Vercel created a deployment record for it and cancelled it two
+seconds later (status `Canceled`), which is how a skipped build appears in `vercel list`; the
+production alias stayed on the preceding `vercel.json` build, which had built normally. The
+mechanism therefore works end to end, and normal production deployments are untouched for any
+non-documentation change.
 
 ### 23.4 Further improvements, ranked
 
