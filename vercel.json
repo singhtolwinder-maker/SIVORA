@@ -53,15 +53,7 @@
       "destination": "https://savora-backend-4haz.onrender.com/api/:path*"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/__missing_static_asset__"
-    },
-    {
-      "source": "/images/(.*)",
-      "destination": "/__missing_static_asset__"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.(?:js|mjs|css|map|png|jpg|jpeg|gif|svg|webp|avif|ico|woff|woff2|ttf|otf|json|txt|xml)$).*)",
       "destination": "/index.html"
     }
   ],
