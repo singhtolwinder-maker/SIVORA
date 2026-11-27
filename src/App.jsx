@@ -75,11 +75,17 @@ function Storefront() {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-ink">
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       <Preloader />
       <ScrollProgress />
       <Navbar />
 
-      <main id="main">
+      {/* `tabIndex` makes the skip link's target focusable; the outline is
+          suppressed because the whole viewport being ringed is not a useful
+          focus indicator — the skip link itself already shows the state. */}
+      <main id="main" tabIndex={-1} className="focus:outline-none">
         <Hero />
         <Marquee items={marqueeItems} />
         <Menu />

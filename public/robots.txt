@@ -1,0 +1,7 @@
+# SAVORA — the public storefront is indexable; the staff dashboard and the API are not.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://savora-restaurant-five.vercel.app/sitemap.xml
