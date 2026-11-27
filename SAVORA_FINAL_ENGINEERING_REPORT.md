@@ -1206,7 +1206,7 @@ because no local API was running). Both harness files were deleted before commit
 | --- | --- |
 | Commits | `6e4cb63` images · `40d2a17` SEO and skip link · `612f898` monitoring · `57c3960` belt fix |
 | Vercel | `savora-restaurant-medfkmaex` Ready (production), alias `savora-restaurant-five.vercel.app` |
-| Render | **Not deployed** — `/api/client-errors` still 404 and `uptimeSeconds` still climbing, so the service never restarted for these commits |
+| Render | Deploy not started by the earlier pushes; auto-deploy was enabled afterwards, and this documentation commit is the first one sent with it on |
 
 ### 24.9 Remaining limitations
 
