@@ -1189,8 +1189,9 @@ because no local API was running). Both harness files were deleted before commit
 | `npm run lint` | PASS — exit 0 |
 | `npm run build` | PASS — 2035 modules, `dist/assets/index-CCXmv-si.js` |
 | `dist` contents | PASS — `robots.txt`, `sitemap.xml`, 115 image files |
-| Backend `npm test` | PASS — 58 tests (56 before, +2 for the new endpoint), 0 failures |
+| Backend `npm test` | PASS — 59 tests (56 before, +2 for the endpoint, +1 for the build name), 0 failures |
 | Manifest reproducibility | PASS — re-run produced an identical `imageManifest.json` |
+| Health build name | PASS locally (asserted in the suite) · NOT LIVE — the field is in `main`, the API still runs the older build |
 | Live `/` | PASS — 200 HTML, canonical, OG and JSON-LD present |
 | Live `/robots.txt`, `/sitemap.xml` | PASS — 200, correct content types |
 | Live image headers | PASS — `image/avif`, `max-age=86400, stale-while-revalidate=604800` |
@@ -1204,17 +1205,19 @@ because no local API was running). Both harness files were deleted before commit
 
 | Item | Value |
 | --- | --- |
-| Commits | `6e4cb63` images · `40d2a17` SEO and skip link · `612f898` monitoring · `57c3960` belt fix |
+| Commits | `6e4cb63` images · `40d2a17` SEO and skip link · `612f898` monitoring · `57c3960` belt fix · `50c13a5`/`ca7514e` report · `c83f2b0` health build name |
 | Vercel | `savora-restaurant-medfkmaex` Ready (production), alias `savora-restaurant-five.vercel.app` |
-| Render | Deploy not started by the earlier pushes; auto-deploy was enabled afterwards, and this documentation commit is the first one sent with it on |
+| Render | **Not deployed.** Four pushes reached `main` (`6e4cb63`, `612f898`, `ca7514e`, `c83f2b0`) without a restart: `uptimeSeconds` ran 2 569 → 4 744 continuously and `/api/health` never gained the `commit` field. Auto-deploy was then enabled by the owner, two further pushes followed, and the service still did not rebuild |
 
 ### 24.9 Remaining limitations
 
-- **BLOCKED — backend deploy.** The one new endpoint exists in `main` but not in production. The
-  Render service did not restart after two pushes and ~25 minutes of polling, so its auto-deploy is
-  off; starting a deploy needs the Render dashboard, which is outside my access. Until it deploys the
-  error boundary's report goes nowhere (the boundary itself still works — a failed report is swallowed
-  by design) and the uptime workflow's API assertions still exercise the older build.
+- **BLOCKED — backend deploy.** `POST /api/client-errors` and the new `commit` field exist in `main`
+  but not in production. The Render service never rebuilt for any of the six pushes, and it still did
+  not after auto-deploy was switched on, so either the setting did not save or the service tracks a
+  different branch. This needs the Render dashboard (`savora-backend-4haz` → Settings → Build &
+  Deploy → branch and Auto-Deploy, or Manual Deploy → Deploy latest commit), which is outside my
+  access. Until it deploys, the error boundary still catches crashes but its report goes nowhere (the
+  failed request is swallowed by design), and the health payload cannot name its build.
 - **NOT TESTED — uptime workflow runs.** A scheduled workflow cannot be triggered without a token, so
   its first real run is the next 15-minute tick; it can also be started by hand from the Actions tab.
 - **NOT TESTED — admin dashboard.** Still no admin credentials (§22.8). The admin image change was
